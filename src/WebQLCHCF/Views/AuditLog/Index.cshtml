@@ -1,0 +1,112 @@
+@model WebQLCHCF.ViewModels.AuditLogFilterViewModel
+
+@{
+    ViewData["Title"] = "Lịch sử thao tác";
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-primary mb-1">Lịch sử thao tác</h1>
+        <div class="text-muted small">Tổng quan / Lịch sử thao tác</div>
+    </div>
+    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+        @Model.Logs.Count log mới nhất
+    </span>
+</div>
+
+<div class="premium-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-12 col-md-3 col-xl-2">
+                <label class="form-label fw-semibold" asp-for="TuNgay">Từ ngày</label>
+                <input class="form-control" asp-for="TuNgay" type="date" />
+            </div>
+            <div class="col-12 col-md-3 col-xl-2">
+                <label class="form-label fw-semibold" asp-for="DenNgay">Đến ngày</label>
+                <input class="form-control" asp-for="DenNgay" type="date" />
+            </div>
+            <div class="col-12 col-md-3 col-xl-2">
+                <label class="form-label fw-semibold" asp-for="MaNV">Mã NV</label>
+                <input class="form-control" asp-for="MaNV" placeholder="NV01" />
+            </div>
+            <div class="col-12 col-md-3 col-xl-2">
+                <label class="form-label fw-semibold" asp-for="ChucNang">Chức năng</label>
+                <input class="form-control" asp-for="ChucNang" placeholder="Order" />
+            </div>
+            <div class="col-12 col-md-3 col-xl-2">
+                <label class="form-label fw-semibold" asp-for="HanhDong">Hành động</label>
+                <input class="form-control" asp-for="HanhDong" placeholder="Tạo QR" />
+            </div>
+            <div class="col-12 col-md-3 col-xl-2">
+                <label class="form-label fw-semibold" asp-for="DoiTuong">Đối tượng</label>
+                <input class="form-control" asp-for="DoiTuong" placeholder="HoaDon" />
+            </div>
+            <div class="col-12 col-md-3 col-xl-2">
+                <label class="form-label fw-semibold" asp-for="MaDoiTuong">Mã đối tượng</label>
+                <input class="form-control" asp-for="MaDoiTuong" placeholder="HD..." />
+            </div>
+            <div class="col-12 col-md-3 col-xl-2">
+                <label class="form-label fw-semibold" asp-for="Top">Số dòng</label>
+                <input class="form-control" asp-for="Top" type="number" min="1" max="1000" />
+            </div>
+            <div class="col-12 col-md-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel me-1"></i>Lọc
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Đặt lại
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="premium-card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Nhân viên</th>
+                    <th>Tên đăng nhập</th>
+                    <th>Vai trò</th>
+                    <th>Chức năng</th>
+                    <th>Hành động</th>
+                    <th>Đối tượng</th>
+                    <th>Mã</th>
+                    <th>Nội dung</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Logs.Any())
+                {
+                    foreach (var item in Model.Logs)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@item.ThoiGian.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td>@(item.MaNV ?? "-")</td>
+                            <td>@(item.TenDangNhap ?? "-")</td>
+                            <td>@(item.VaiTro ?? "-")</td>
+                            <td><span class="badge bg-info-subtle text-info">@item.ChucNang</span></td>
+                            <td><span class="badge bg-primary-subtle text-primary">@item.HanhDong</span></td>
+                            <td>@(item.DoiTuong ?? "-")</td>
+                            <td class="fw-semibold">@(!string.IsNullOrWhiteSpace(item.MaDoiTuong) ? item.MaDoiTuong : "-")</td>
+                            <td style="min-width: 280px;">@item.NoiDung</td>
+                            <td class="text-nowrap">@(!string.IsNullOrWhiteSpace(item.DiaChiIP) ? item.DiaChiIP : "-")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-5">
+                            <i class="bi bi-clock-history fs-3 d-block mb-2"></i>
+                            Chưa có log phù hợp bộ lọc.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

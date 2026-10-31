@@ -1,0 +1,122 @@
+@model List<DoanhThuTheoNgayViewModel>
+
+@{
+    ViewData["Title"] = "Doanh thu theo ngày";
+    string Money(decimal value) => value.ToString("N0") + " đ";
+    decimal tongDoanhThu = Model.Sum(x => x.DoanhThu);
+    int tongSoNgay = Model.Count;
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>@ViewData["Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Doanh thu theo ngày</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger border-0 rounded-3 mb-4 small">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @ViewBag.ErrorMessage
+    </div>
+}
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 rounded-3 mb-4 small"></div>
+}
+
+<!-- FILTER FORM CARD -->
+<div class="card app-card mb-4">
+    <div class="app-card-body p-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar-event me-1 text-primary"></i> Từ ngày</label>
+                <input type="date" name="tuNgay" value="@ViewData["TuNgay"]" class="form-control rounded-pill" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar-event me-1 text-primary"></i> Đến ngày</label>
+                <input type="date" name="denNgay" value="@ViewData["DenNgay"]" class="form-control rounded-pill" />
+            </div>
+            <div class="col-12 col-md-4">
+                <button class="btn btn-primary rounded-pill px-4 w-100 hover-lift" type="submit">
+                    <i class="bi bi-filter me-1"></i> Xem báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (ViewBag.HasInvalidDateRange != true)
+{
+    <!-- METRICS -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6">
+            <div class="card metric-card info h-100">
+                <div class="card-body">
+                    <div class="metric-icon"><i class="bi bi-cash-coin"></i></div>
+                    <div class="metric-label">Tổng doanh thu kỳ báo cáo</div>
+                    <div class="metric-value text-success fs-3">@Money(tongDoanhThu)</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="card metric-card primary h-100">
+                <div class="card-body">
+                    <div class="metric-icon"><i class="bi bi-calendar-check"></i></div>
+                    <div class="metric-label">Số ngày ghi nhận doanh thu</div>
+                    <div class="metric-value">@tongSoNgay <span class="fs-6 text-muted">ngày</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card app-card">
+        <div class="app-card-header bg-light">
+            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-list-stars me-2"></i> Chi tiết doanh thu từng ngày</h5>
+        </div>
+        <div class="app-card-body p-0">
+            <div class="table-responsive">
+                <table class="table app-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ngày lập</th>
+                            <th class="text-end" style="width: 300px;">Doanh thu phát sinh</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="2" class="text-center py-5 text-muted">
+                                    <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
+                                    Không có dữ liệu doanh thu trong khoảng thời gian đã chọn!
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-primary">
+                                        <i class="bi bi-calendar-date me-1.5 text-secondary"></i>@item.NgayLap.ToString("dd/MM/yyyy")
+                                    </td>
+                                    <td class="text-end fw-bold text-success fs-6">
+                                        @Money(item.DoanhThu)
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}

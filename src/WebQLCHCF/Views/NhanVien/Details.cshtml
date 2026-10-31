@@ -1,0 +1,121 @@
+﻿@model object
+
+@{
+    ViewData["Title"] = "Chi tiết Nhân Viên";
+    var cols = (string[])ViewData["Columns"]!;
+    var labels = ViewData["Labels"] as Dictionary<string, string> ?? new();
+    var keys = (string[])ViewData["KeyNames"]!;
+
+    string F(object? v, string n)
+    {
+        if (v == null)
+        {
+            return "";
+        }
+        if (v is DateTime d)
+        {
+            return d.ToString("dd/MM/yyyy");
+        }
+        if (v is decimal m && (n.Contains("Tien") || n.Contains("Gia") || n.Contains("Luong") || n.Contains("HeSo") || n.Contains("Thuong") || n.Contains("Phat") || n.Contains("PhuCap")))
+        {
+            return m.ToString("N0") + " đ";
+        }
+
+        return v.ToString() ?? "";
+    }
+
+    string GetBadgeClass(string value)
+    {
+        return value switch
+        {
+            "Đang bán" or "Sẵn sàng" or "Đang làm việc" or "Hoạt động" => "badge-success-subtle",
+            "Tạm ngưng" or "Cảnh báo" or "Nghỉ phép" => "badge-warning-subtle",
+            "Ngừng bán" or "Thử việc" => "badge-primary-subtle",
+            "Khóa" or "Hủy" or "Đã xóa" or "Đã nghỉ việc" or "Đã thôi việc" => "badge-danger-subtle",
+            _ => "badge-info-subtle"
+        };
+    }
+
+    IDictionary<string, string> R(object item)
+    {
+        var r = new Dictionary<string, string>();
+        if (keys.Length == 1)
+        {
+            r["id"] = Convert.ToString(item.GetType().GetProperty(keys[0])?.GetValue(item)) ?? "";
+        }
+        else
+        {
+            foreach (var k in keys)
+            {
+                r[char.ToLowerInvariant(k[0]) + k[1..]] = Convert.ToString(item.GetType().GetProperty(k)?.GetValue(item)) ?? "";
+            }
+        }
+
+        return r;
+    }
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>@ViewData["Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Nhân viên</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Chi tiết</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-all-route-data="R(Model)" class="btn btn-primary rounded-pill px-4 hover-lift">
+            <i class="bi bi-pencil-square"></i> Sửa thông tin
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<div class="card app-card form-card">
+    <div class="app-card-header bg-light">
+        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-info-circle-fill me-2"></i> Hồ sơ nhân sự chi tiết</h5>
+    </div>
+    <div class="app-card-body p-4">
+        <div class="row g-3">
+            @foreach (var c in cols)
+            {
+                var value = F(Model.GetType().GetProperty(c)?.GetValue(Model), c);
+                <div class="col-12 border-bottom pb-2">
+                    <div class="row">
+                        <div class="col-sm-4 text-muted small fw-bold text-uppercase">@(labels.ContainsKey(c) ? labels[c] : c):</div>
+                        <div class="col-sm-8 fw-semibold text-primary">
+                            @if (c == "TrangThai" || c == "TinhTrang" || c == "TrangThaiNV")
+                            {
+                                <span class="badge @GetBadgeClass(value)">@value</span>
+                            }
+                            else if (c == "MaNV")
+                            {
+                                <code class="fw-bold fs-6">@value</code>
+                            }
+                            else if (c == "LuongCoBan" || c == "LuongCa")
+                            {
+                                <span class="fw-bold text-success">@value</span>
+                            }
+                            else
+                            {
+                                @value
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="mt-4 pt-3 border-top d-flex gap-2">
+            <a asp-action="Edit" asp-all-route-data="R(Model)" class="btn btn-primary rounded-pill px-4">Chỉnh sửa</a>
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Quay lại danh sách</a>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,102 @@
+@model LogoutConfirmViewModel
+
+@{
+    ViewData["Title"] = "Xác nhận đăng xuất & Check-out";
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header justify-content-center">
+    <div class="text-center">
+        <h2>@ViewData["Title"]</h2>
+        <p class="text-muted mb-0">Hệ thống ghi nhận ca làm việc của bạn</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-5">
+        <div class="card app-card border-warning shadow-lg hover-lift-none">
+            <div class="app-card-header bg-warning-subtle text-dark border-bottom d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history fs-4 text-warning"></i>
+                <h5 class="mb-0 fw-bold">Thông tin ca làm việc hiện tại</h5>
+            </div>
+            <div class="app-card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-4 bg-light rounded-3 p-3 border">
+                    <div class="bg-primary-subtle text-primary rounded-circle p-2.5 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-person-badge fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-primary mb-1">@Model.TenNV</h6>
+                        <span class="badge badge-primary-subtle py-1 px-2.5 fs-7">Mã nhân viên: @Model.MaNV</span>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-4 bg-light rounded-3 p-3 border">
+                    <div class="col-sm-5 text-muted small fw-bold">Thời gian Check-in:</div>
+                    <div class="col-sm-7 fw-semibold">
+                        @if (Model.ThoiGianCheckIn != null)
+                        {
+                            <i class="bi bi-box-arrow-in-right me-1 text-success"></i>@Model.ThoiGianCheckIn.Value.ToString("HH:mm - dd/MM/yyyy")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Chưa ghi nhận</span>
+                        }
+                    </div>
+
+                    <div class="col-sm-5 text-muted small fw-bold">Thời gian đã làm:</div>
+                    <div class="col-sm-7 fw-semibold">
+                        @if (!string.IsNullOrWhiteSpace(Model.ThoiGianDaLamText))
+                        {
+                            <i class="bi bi-hourglass-split me-1 text-primary animate-spin"></i><span class="text-primary">@Model.ThoiGianDaLamText</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">--</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="alert alert-warning border-0 rounded-3 mb-4 d-flex align-items-start gap-2.5">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 mt-0.5 text-warning"></i>
+                    <div>
+                        <strong>Chú ý quan trọng:</strong> Hành động đăng xuất sẽ đồng thời <strong>Check-out</strong> và kết thúc ca làm của bạn hôm nay. Tiền công ca làm sẽ được chốt tự động.
+                    </div>
+                </div>
+
+                <form asp-action="Logout" method="post" class="needs-validation" novalidate>
+                    @Html.AntiForgeryToken()
+                    <input asp-for="MaNV" type="hidden" />
+                    <input asp-for="TenNV" type="hidden" />
+                    
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 rounded-3 mb-3 small"></div>
+                    }
+
+                    <div class="app-form-group mb-4">
+                        <label asp-for="MatKhau" class="form-label fw-bold">
+                            Nhập mật khẩu của bạn để xác thực:
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white text-muted"><i class="bi bi-shield-lock-fill"></i></span>
+                            <input asp-for="MatKhau" type="password" class="form-control" placeholder="Mật khẩu tài khoản..." autocomplete="current-password" required />
+                        </div>
+                        <span asp-validation-for="MatKhau" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-danger rounded-pill flex-grow-1 py-2 px-4 hover-lift d-flex align-items-center justify-content-center gap-1.5" type="submit">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Check-out và Đăng xuất</span>
+                        </button>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 py-2">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

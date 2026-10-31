@@ -1,0 +1,407 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.Http
+@model WebQLCHCF.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Tổng quan hệ thống";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var tenNV = Context.Session.GetString("TenNV");
+    var vaiTro = Context.Session.GetString("VaiTro");
+
+    string Money(decimal value) => value.ToString("N0", culture) + " đ";
+    string DateText(DateTime value) => value.ToString("dd/MM/yyyy");
+    string GuestText(string? value) => string.IsNullOrWhiteSpace(value) ? "Khách lẻ" : value;
+    string StatusBadge(string status) =>
+        status switch
+        {
+            "Đang bán" => "badge-success-subtle",
+            "Tạm ngưng" => "badge-warning-subtle",
+            "Ngừng bán" => "badge-danger-subtle",
+            _ => "badge-primary-subtle",
+        };
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>Tổng Quan Hệ Thống</h2>
+        @if (!string.IsNullOrWhiteSpace(tenNV))
+        {
+            <div class="text-muted">
+                <i class="bi bi-person-workspace text-secondary me-1"></i>
+                Xin chào, <strong class="text-primary">@tenNV</strong>
+                @if (!string.IsNullOrWhiteSpace(vaiTro)) { <span class="badge badge-primary-subtle ms-1">@vaiTro</span> }
+            </div>
+        }
+    </div>
+</div>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger shadow-sm border-0 rounded-4 mb-4">
+        <i class="bi bi-exclamation-octagon-fill me-2"></i> @ViewBag.ErrorMessage
+    </div>
+}
+
+<!-- METRICS GRID -->
+<div class="row g-3 mb-4">
+    <!-- Card 1: Sản phẩm -->
+    <div class="col-md-6 col-xl">
+        <div class="metric-card">
+            <div>
+                <p class="metric-label">Món đang bán</p>
+                <h3 class="metric-value">@Model.SanPhamCoTheBan <span class="fs-6 fw-normal text-muted">/ @Model.TongSanPham</span></h3>
+                @if (Model.SanPhamKhongTheBan > 0)
+                {
+                    <span class="badge badge-warning-subtle py-1 px-2 mt-1 d-inline-block" style="font-size: 0.75rem;">
+                        <i class="bi bi-exclamation-circle"></i> @Model.SanPhamKhongTheBan chưa bán
+                    </span>
+                }
+                else
+                {
+                    <span class="badge badge-success-subtle py-1 px-2 mt-1 d-inline-block" style="font-size: 0.75rem;">
+                        <i class="bi bi-check-circle"></i> Sẵn sàng 100%
+                    </span>
+                }
+            </div>
+            <div class="metric-icon bg-success-subtle text-success">
+                <i class="bi bi-box-seam-fill"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 2: Bàn hoạt động -->
+    <div class="col-md-6 col-xl">
+        <div class="metric-card">
+            <div>
+                <p class="metric-label">Bàn phục vụ</p>
+                <h3 class="metric-value">@Model.BanDangHoatDong <span class="fs-6 fw-normal text-muted">/ @Model.TongBan</span></h3>
+                <span class="badge badge-primary-subtle py-1 px-2 mt-1 d-inline-block" style="font-size: 0.75rem;">
+                    Bàn đang sử dụng
+                </span>
+            </div>
+            <div class="metric-icon bg-primary-subtle text-primary">
+                <i class="bi bi-table"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Nhân viên đang làm -->
+    <div class="col-md-6 col-xl">
+        <div class="metric-card">
+            <div>
+                <p class="metric-label">Nhân sự online</p>
+                <h3 class="metric-value">@Model.NhanVienDangLam <span class="fs-6 fw-normal text-muted">/ @Model.TongNhanVien</span></h3>
+                <span class="badge badge-info-subtle py-1 px-2 mt-1 d-inline-block" style="font-size: 0.75rem;">
+                    Đang làm ca trực
+                </span>
+            </div>
+            <div class="metric-icon bg-info-subtle text-info">
+                <i class="bi bi-people-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 4: Doanh thu hôm nay -->
+    <div class="col-md-6 col-xl">
+        <div class="metric-card">
+            <div>
+                <p class="metric-label">Doanh thu hôm nay</p>
+                <h3 class="metric-value text-success" style="font-size: 1.5rem;">@Money(Model.DoanhThuHomNay)</h3>
+                <span class="badge badge-success-subtle py-1 px-2 mt-1 d-inline-block" style="font-size: 0.75rem;">
+                    <i class="bi bi-graph-up-arrow"></i> Doanh thu thực
+                </span>
+            </div>
+            <div class="metric-icon bg-warning-subtle text-warning">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 5: Doanh thu tháng này -->
+    <div class="col-md-6 col-xl">
+        <div class="metric-card">
+            <div>
+                <p class="metric-label">Doanh thu tháng</p>
+                <h3 class="metric-value text-primary" style="font-size: 1.5rem;">@Money(Model.DoanhThuThangNay)</h3>
+                <span class="badge badge-primary-subtle py-1 px-2 mt-1 d-inline-block" style="font-size: 0.75rem;">
+                    Tháng hiện tại
+                </span>
+            </div>
+            <div class="metric-icon bg-danger-subtle text-danger">
+                <i class="bi bi-wallet2"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DETAILED PANELS -->
+<div class="row g-4">
+    <!-- PANEL 1: Món chưa thể bán -->
+    <div class="col-lg-6">
+        <div class="card app-card">
+            <div class="app-card-header">
+                <h5 class="mb-0 fw-bold text-primary d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-octagon text-danger"></i> Món chưa thể bán
+                </h5>
+                <span class="badge bg-danger rounded-pill">@Model.SanPhamKhongTheBanItems.Count()</span>
+            </div>
+            <div class="app-card-body p-0">
+                <div class="table-responsive border-0 rounded-0">
+                    <table class="table app-table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mã SP</th>
+                                <th>Tên sản phẩm</th>
+                                <th class="text-end">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.SanPhamKhongTheBanItems.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="dashboard-empty-state">
+                                        <i class="bi bi-check-circle-fill text-success fs-3 d-block mb-2"></i>
+                                        Tất cả món đã sẵn sàng phục vụ khách hàng!
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.SanPhamKhongTheBanItems)
+                                {
+                                    <tr>
+                                        <td><code class="fw-bold">@item.MaSP</code></td>
+                                        <td class="fw-semibold">@item.TenSP</td>
+                                        <td class="text-end"><span class="badge @StatusBadge(item.TrangThai)">@item.TrangThai</span></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 2: Nguyên liệu sắp hết -->
+    <div class="col-12">
+        <div class="card app-card">
+            <div class="app-card-header">
+                <h5 class="mb-0 fw-bold text-primary d-flex align-items-center gap-2">
+                    <i class="bi bi-cone-striped text-warning"></i> Nguyên liệu sắp hết
+                </h5>
+                <span class="badge bg-warning text-dark rounded-pill">@Model.NguyenLieuSapHet.Count()</span>
+            </div>
+            <div class="app-card-body p-0">
+                <div class="table-responsive border-0 rounded-0">
+                    <table class="table app-table dashboard-table dashboard-stock-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mã NL</th>
+                                <th>Tên nguyên liệu</th>
+                                <th>Tồn hiện tại</th>
+                                <th>Tối thiểu</th>
+                                <th class="text-end">Đơn vị</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.NguyenLieuSapHet.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="dashboard-empty-state">
+                                        <i class="bi bi-shield-check text-success fs-3 d-block mb-2"></i>
+                                        Kho hàng đầy đủ, không có nguyên liệu nào ở mức báo động!
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.NguyenLieuSapHet)
+                                {
+                                    <tr class="table-warning-subtle">
+                                        <td><code class="fw-bold">@item.MaNL</code></td>
+                                        <td class="fw-semibold">@item.TenNL</td>
+                                        <td>
+                                            <span class="text-danger fw-bold">@item.SoLuongTon</span>
+                                        </td>
+                                        <td>@item.MucTonToiThieu</td>
+                                        <td class="text-end"><span class="badge badge-primary-subtle">@item.DonViTinh</span></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 3: Top 5 sản phẩm bán chạy -->
+    <div class="col-lg-6">
+        <div class="card app-card">
+            <div class="app-card-header">
+                <h5 class="mb-0 fw-bold text-primary d-flex align-items-center gap-2">
+                    <i class="bi bi-trophy-fill text-warning"></i> Top 5 sản phẩm bán chạy
+                </h5>
+            </div>
+            <div class="app-card-body p-0">
+                <div class="table-responsive border-0 rounded-0">
+                    <table class="table app-table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mã SP</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Số lượng đã bán</th>
+                                <th class="text-end">Doanh thu mang lại</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.TopSanPhamBanChay.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="dashboard-empty-state">
+                                        Chưa có thông tin bán hàng ngày hôm nay
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                int rank = 1;
+                                @foreach (var item in Model.TopSanPhamBanChay)
+                                {
+                                    <tr>
+                                        <td>
+                                            @if (rank <= 3)
+                                            {
+                                                <span class="badge bg-warning text-dark me-1"><i class="bi bi-star-fill"></i> @rank</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary me-1">@rank</span>
+                                            }
+                                            <code class="fw-bold">@item.MaSP</code>
+                                        </td>
+                                        <td class="fw-semibold">@item.TenSP</td>
+                                        <td class="fw-bold text-secondary">@item.TongSoLuong món</td>
+                                        <td class="text-end text-success fw-bold">@Money(item.TongTien)</td>
+                                    </tr>
+                                    rank++;
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 4: Hóa đơn gần đây -->
+    <div class="col-lg-6">
+        <div class="card app-card">
+            <div class="app-card-header">
+                <h5 class="mb-0 fw-bold text-primary d-flex align-items-center gap-2">
+                    <i class="bi bi-receipt-cutoff text-secondary"></i> Hóa đơn gần đây
+                </h5>
+                <a asp-controller="HoaDon" asp-action="Index" class="btn btn-outline-primary btn-sm rounded-pill py-1 px-3" style="font-size: 0.8rem;">Xem tất cả</a>
+            </div>
+            <div class="app-card-body p-0">
+                <div class="table-responsive border-0 rounded-0">
+                    <table class="table app-table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mã HĐ</th>
+                                <th>Ngày lập</th>
+                                <th>Nhân viên</th>
+                                <th>Khách hàng</th>
+                                <th>Bàn</th>
+                                <th class="text-end">Tổng tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.HoaDonGanDay.Any())
+                            {
+                                <tr>
+                                    <td colspan="6" class="dashboard-empty-state">
+                                        Chưa có hóa đơn nào được lập
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.HoaDonGanDay)
+                                {
+                                    <tr>
+                                        <td><code class="fw-bold">@item.MaHD</code></td>
+                                        <td>@DateText(item.NgayLap)</td>
+                                        <td><small class="fw-semibold">@item.TenNV</small></td>
+                                        <td>@GuestText(item.TenKH)</td>
+                                        <td>
+                                            @if (item.TenBan == "MVE")
+                                            {
+                                                <span class="badge badge-info-subtle">Mang về</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-primary-subtle">@item.TenBan</span>
+                                            }
+                                        </td>
+                                        <td class="text-end text-success fw-bold">@Money(item.TongTien)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 5: Phiếu nhập gần đây -->
+    <div class="col-lg-6">
+        <div class="card app-card">
+            <div class="app-card-header">
+                <h5 class="mb-0 fw-bold text-primary d-flex align-items-center gap-2">
+                    <i class="bi bi-cart-plus-fill text-success"></i> Phiếu nhập gần đây
+                </h5>
+                <a asp-controller="PhieuNhap" asp-action="Index" class="btn btn-outline-primary btn-sm rounded-pill py-1 px-3" style="font-size: 0.8rem;">Xem tất cả</a>
+            </div>
+            <div class="app-card-body p-0">
+                <div class="table-responsive border-0 rounded-0">
+                    <table class="table app-table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mã PN</th>
+                                <th>Ngày nhập</th>
+                                <th>Nhân viên thực hiện</th>
+                                <th class="text-end">Tổng tiền nhập</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.PhieuNhapGanDay.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="dashboard-empty-state">
+                                        Chưa có phiếu nhập hàng nào
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.PhieuNhapGanDay)
+                                {
+                                    <tr>
+                                        <td><code class="fw-bold">@item.MaPN</code></td>
+                                        <td>@DateText(item.NgayNhap)</td>
+                                        <td><small class="fw-semibold">@item.TenNV</small></td>
+                                        <td class="text-end text-danger fw-bold">@Money(item.TongTien)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

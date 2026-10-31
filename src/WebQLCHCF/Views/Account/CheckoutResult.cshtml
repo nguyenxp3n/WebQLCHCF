@@ -1,0 +1,127 @@
+@using System.Globalization
+@model ChamCongCheckoutResultViewModel
+
+@{
+    Layout = null;
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var thoiGianDaLam = ViewBag.ThoiGianDaLamText as string ?? Model.ThoiGianDaLamText;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Check-out Thành Công - WebQLCHCF</title>
+    
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" />
+    
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="~/css/site.css" />
+    
+    <style>
+        body {
+            background-color: var(--app-bg-warm-beige);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .checkout-success-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--app-color-latte-border);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(92, 58, 33, 0.08);
+            width: 100%;
+            max-width: 580px;
+            overflow: hidden;
+        }
+        .success-banner {
+            background: linear-gradient(135deg, #198754, #146c43);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+        }
+        .success-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .info-list dt {
+            color: var(--app-color-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-list dd {
+            color: var(--app-color-espresso);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="checkout-success-card">
+        <div class="success-banner">
+            <div class="success-icon-wrapper">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h3 class="fw-bold mb-1">CHECK-OUT THÀNH CÔNG</h3>
+            <p class="mb-0 opacity-75">Ca làm việc của bạn đã được ghi nhận và chốt tiền công</p>
+        </div>
+        
+        <div class="p-4 p-md-5">
+            <h5 class="fw-bold mb-4 text-primary text-center"><i class="bi bi-receipt me-2"></i>Chi Tiết Ca Làm Việc</h5>
+            
+            <dl class="row info-list g-3 border-bottom pb-4 mb-4">
+                <dt class="col-sm-5">Nhân viên:</dt>
+                <dd class="col-sm-7"><span class="badge badge-primary-subtle py-1.5 px-3 fs-6">@Model.TenNV</span></dd>
+
+                <dt class="col-sm-5">Giờ check-in:</dt>
+                <dd class="col-sm-7"><i class="bi bi-clock text-success me-1.5"></i>@Model.ThoiGianCheckIn.ToString("HH:mm - dd/MM/yyyy")</dd>
+
+                <dt class="col-sm-5">Giờ check-out:</dt>
+                <dd class="col-sm-7"><i class="bi bi-clock-fill text-danger me-1.5"></i>@Model.ThoiGianCheckOut?.ToString("HH:mm - dd/MM/yyyy")</dd>
+
+                <dt class="col-sm-5">Tổng giờ hoạt động:</dt>
+                <dd class="col-sm-7 text-primary"><i class="bi bi-hourglass-split me-1.5"></i>@thoiGianDaLam</dd>
+
+                <dt class="col-sm-5">Tiền công ca làm:</dt>
+                <dd class="col-sm-7 text-success fs-5 fw-bold"><i class="bi bi-cash-coin me-1.5"></i>@((Model.TienCong ?? 0).ToString("N0", culture)) đ</dd>
+            </dl>
+            
+            <div class="alert alert-success border-0 rounded-3 mb-4 text-center py-3">
+                <i class="bi bi-shield-check me-2"></i>Dữ liệu đã được đồng bộ an toàn lên Cloud Server.
+            </div>
+
+            <div class="text-center">
+                <a href="@Url.Action("Login", "Account")" class="btn btn-primary rounded-pill w-100 py-3 fw-bold hover-lift d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-arrow-left-circle-fill fs-5"></i>
+                    <span>Quay lại trang Đăng nhập</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

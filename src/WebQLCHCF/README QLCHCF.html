@@ -1,0 +1,2851 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tài liệu Kỹ thuật Hệ thống WebQLCHCF</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Mermaid Support -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        background: '#0d111e',
+        primaryColor: '#1e293b',
+        primaryTextColor: '#f0f6fc',
+        lineColor: '#388bfd'
+      }
+    });
+  </script>
+
+  <style>
+    :root {
+      --bg-main: #06090f;
+      --bg-sidebar: #0a0e17;
+      --bg-card: #0f1420;
+      --bg-card-hover: #131a28;
+      --bg-code: #080c14;
+      --bg-input: rgba(255, 255, 255, 0.02);
+      --border: rgba(56, 139, 253, 0.10);
+      --border-hover: rgba(56, 139, 253, 0.25);
+      --border-strong: rgba(56, 139, 253, 0.35);
+      --text-1: #f0f6fc;
+      --text-2: #9eaab8;
+      --text-3: #5d6a7a;
+      --accent: #388bfd;
+      --accent-soft: #58a6ff;
+      --accent-glow: rgba(56, 139, 253, 0.15);
+      --purple: #bc8cff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --orange: #db6d28;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-head: 'Outfit', sans-serif;
+      --font-mono: 'Fira Code', 'Cascadia Code', monospace;
+      --sidebar-w: 300px;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+      --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    /* === SCROLLBAR === */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(56, 139, 253, 0.12);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 139, 253, 0.3);
+    }
+
+    /* === PROGRESS BAR === */
+    #reading-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--purple));
+      z-index: 9999;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-main);
+      color: var(--text-1);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      display: flex;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* === SIDEBAR === */
+    #sidebar {
+      width: var(--sidebar-w);
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-brand {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-brand .logo {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      color: #fff;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 5px 9px;
+      border-radius: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    .sidebar-brand .brand-text {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-1);
+      letter-spacing: -0.02em;
+    }
+
+    .sidebar-search {
+      margin: 12px 16px 4px;
+      position: relative;
+    }
+
+    .sidebar-search input {
+      width: 100%;
+      padding: 9px 12px 9px 34px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-1);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      transition: all 0.2s;
+    }
+
+    .sidebar-search input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .sidebar-search .s-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-3);
+      font-size: 0.82rem;
+      pointer-events: none;
+    }
+
+    #sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px 40px;
+    }
+
+    .nav-group {
+      margin-bottom: 6px;
+    }
+
+    .nav-group-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--text-3);
+      font-family: var(--font-head);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 10px 8px 6px;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .nav-group-btn:hover {
+      color: var(--text-2);
+    }
+
+    .nav-group-btn .chevron {
+      margin-left: auto;
+      font-size: 0.6rem;
+      transition: transform 0.2s;
+      color: var(--text-3);
+    }
+
+    .nav-group-btn[aria-expanded="false"] .chevron {
+      transform: rotate(-90deg);
+    }
+
+    .nav-group-btn[aria-expanded="true"] .chevron {
+      transform: rotate(0deg);
+    }
+
+    .nav-group-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .nav-group-list.collapsed {
+      max-height: 0 !important;
+    }
+
+    .nav-group-list li a {
+      display: block;
+      padding: 5px 10px;
+      color: var(--text-2);
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      transition: all 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-left: 2px solid transparent;
+      margin: 1px 0;
+    }
+
+    .nav-group-list li a:hover {
+      color: var(--text-1);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-group-list li a.active {
+      color: #fff;
+      background: rgba(56, 139, 253, 0.08);
+      border-left-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .nav-group-list li.sub a {
+      padding-left: 22px;
+      font-size: 0.76rem;
+      opacity: 0.85;
+    }
+
+    .nav-group-list li.sub2 a {
+      padding-left: 34px;
+      font-size: 0.72rem;
+      opacity: 0.7;
+    }
+
+    /* === MAIN === */
+    #main-content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 48px 64px 100px;
+      max-width: 1050px;
+    }
+
+    /* === HERO === */
+    .hero {
+      background: radial-gradient(ellipse at 15% 30%, rgba(56, 139, 253, 0.07) 0%, transparent 60%),
+        radial-gradient(ellipse at 85% 70%, rgba(188, 140, 255, 0.04) 0%, transparent 50%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 44px 48px 36px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -100px;
+      right: -60px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(56, 139, 253, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-head);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      background: rgba(56, 139, 253, 0.08);
+      border: 1px solid rgba(56, 139, 253, 0.18);
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      font-family: var(--font-head);
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin: 0 0 6px;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-family: var(--font-head);
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: #8ea4c8;
+      margin: 0 0 12px;
+    }
+
+    .hero-desc {
+      font-size: 0.95rem;
+      color: var(--text-2);
+      margin: 0 0 24px;
+      max-width: 720px;
+      line-height: 1.6;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 28px;
+    }
+
+    .hero-tag {
+      font-family: var(--font-head);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #8ea4c8;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 4px 10px;
+      border-radius: 5px;
+      transition: all 0.15s;
+    }
+
+    .hero-tag:hover {
+      background: rgba(56, 139, 253, 0.06);
+      border-color: rgba(56, 139, 253, 0.2);
+      color: var(--text-1);
+    }
+
+    /* Quick stats row */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-hover);
+      background: rgba(56, 139, 253, 0.03);
+    }
+
+    .stat-num {
+      font-family: var(--font-head);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-3);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+
+    /* === SECTION CARDS === */
+    .doc-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 40px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow);
+      transition: border-color 0.25s;
+    }
+
+    .doc-section:hover {
+      border-color: var(--border-hover);
+    }
+
+    /* === TYPOGRAPHY === */
+    h2 {
+      font-family: var(--font-head);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 1.2rem;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-1);
+      scroll-margin-top: 32px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .icon-start {
+      background: rgba(56, 139, 253, 0.1);
+      color: var(--accent);
+    }
+
+    .icon-arch {
+      background: rgba(188, 140, 255, 0.1);
+      color: var(--purple);
+    }
+
+    .icon-data {
+      background: rgba(63, 185, 80, 0.1);
+      color: var(--green);
+    }
+
+    .icon-security {
+      background: rgba(248, 81, 73, 0.1);
+      color: var(--red);
+    }
+
+    .icon-biz {
+      background: rgba(210, 153, 34, 0.1);
+      color: var(--yellow);
+    }
+
+    .icon-ops {
+      background: rgba(219, 109, 40, 0.1);
+      color: var(--orange);
+    }
+
+    h3 {
+      font-family: var(--font-head);
+      font-size: 1.12rem;
+      font-weight: 600;
+      margin: 1.8rem 0 0.8rem;
+      color: #8ea4c8;
+      scroll-margin-top: 32px;
+    }
+
+    h4 {
+      font-family: var(--font-head);
+      font-size: 0.98rem;
+      font-weight: 600;
+      margin: 1.2rem 0 0.6rem;
+      color: var(--text-1);
+      scroll-margin-top: 32px;
+    }
+
+    p {
+      margin: 0 0 1rem;
+      color: var(--text-2);
+      font-size: 0.92rem;
+      line-height: 1.75;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(56, 139, 253, 0.3);
+      transition: all 0.15s;
+    }
+
+    a:hover {
+      color: var(--accent-soft);
+      border-bottom-style: solid;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 1rem;
+      padding-left: 22px;
+      color: var(--text-2);
+      font-size: 0.92rem;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    li strong {
+      color: var(--text-1);
+    }
+
+    /* === COLLAPSIBLE DETAILS === */
+    details.collapse-section {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 1rem 0;
+      transition: border-color 0.2s;
+    }
+
+    details.collapse-section[open] {
+      border-color: var(--border-hover);
+    }
+
+    details.collapse-section summary {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-1);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+      border-radius: 8px;
+      user-select: none;
+    }
+
+    details.collapse-section summary:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    details.collapse-section summary::before {
+      content: '▸';
+      font-size: 0.7rem;
+      color: var(--text-3);
+      transition: transform 0.2s;
+      display: inline-block;
+      width: 12px;
+    }
+
+    details.collapse-section[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    details.collapse-section summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.collapse-section .details-body {
+      padding: 4px 16px 16px;
+    }
+
+    /* === CODE BLOCKS === */
+    .code-box {
+      margin: 1.2rem 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg-code);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .code-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(10, 14, 23, 0.8);
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .code-box-lang {
+      font-family: var(--font-head);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .code-box-lang::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      display: inline-block;
+    }
+
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-3);
+      padding: 3px 10px;
+      font-size: 0.7rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      color: var(--text-1);
+      background: rgba(56, 139, 253, 0.1);
+      border-color: var(--accent);
+    }
+
+    .code-box pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      background: transparent;
+    }
+
+    .code-box code {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #c9d5e3;
+      line-height: 1.55;
+      display: block;
+    }
+
+    code:not(pre code) {
+      font-family: var(--font-mono);
+      background: rgba(255, 255, 255, 0.05);
+      color: #f47067;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+    }
+
+    /* === TABLES === */
+    .tbl-wrap {
+      overflow-x: auto;
+      margin: 1.4rem 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(10, 14, 23, 0.3);
+    }
+
+    th {
+      background: rgba(56, 139, 253, 0.04);
+      color: var(--text-1);
+      font-family: var(--font-head);
+      font-weight: 600;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.84rem;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      color: var(--text-2);
+      font-size: 0.84rem;
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(56, 139, 253, 0.02);
+      color: var(--text-1);
+    }
+
+    /* === BADGES === */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: var(--font-head);
+      border-radius: 5px;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-green {
+      background: rgba(63, 185, 80, 0.1);
+      color: var(--green);
+      border: 1px solid rgba(63, 185, 80, 0.2);
+    }
+
+    .badge-yellow {
+      background: rgba(210, 153, 34, 0.1);
+      color: var(--yellow);
+      border: 1px solid rgba(210, 153, 34, 0.2);
+    }
+
+    .badge-red {
+      background: rgba(248, 81, 73, 0.1);
+      color: var(--red);
+      border: 1px solid rgba(248, 81, 73, 0.2);
+    }
+
+    .badge-blue {
+      background: rgba(56, 139, 253, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(56, 139, 253, 0.2);
+    }
+
+    .badge-purple {
+      background: rgba(188, 140, 255, 0.1);
+      color: var(--purple);
+      border: 1px solid rgba(188, 140, 255, 0.2);
+    }
+
+    /* === CALLOUTS === */
+    .callout {
+      margin: 1.4rem 0;
+      padding: 14px 18px;
+      border-left: 3px solid;
+      border-radius: 0 8px 8px 0;
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .callout-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 0.78rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .callout-body {
+      color: var(--text-2);
+      font-size: 0.88rem;
+    }
+
+    .callout-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .callout-important {
+      border-left-color: var(--purple);
+      background: linear-gradient(90deg, rgba(188, 140, 255, 0.04) 0%, transparent 100%);
+    }
+
+    .callout-important .callout-title {
+      color: var(--purple);
+    }
+
+    .callout-warning {
+      border-left-color: var(--yellow);
+      background: linear-gradient(90deg, rgba(210, 153, 34, 0.04) 0%, transparent 100%);
+    }
+
+    .callout-warning .callout-title {
+      color: var(--yellow);
+    }
+
+    .callout-note {
+      border-left-color: var(--accent);
+      background: linear-gradient(90deg, rgba(56, 139, 253, 0.04) 0%, transparent 100%);
+    }
+
+    .callout-note .callout-title {
+      color: var(--accent);
+    }
+
+    .callout-caution {
+      border-left-color: var(--red);
+      background: linear-gradient(90deg, rgba(248, 81, 73, 0.04) 0%, transparent 100%);
+    }
+
+    .callout-caution .callout-title {
+      color: var(--red);
+    }
+
+    /* === CARD GRID for Models/Controllers === */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      margin: 1rem 0;
+    }
+
+    .mini-card {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      transition: all 0.2s;
+    }
+
+    .mini-card:hover {
+      border-color: var(--border-hover);
+      background: rgba(56, 139, 253, 0.02);
+      transform: translateY(-1px);
+    }
+
+    .mini-card-title {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent-soft);
+      margin-bottom: 6px;
+    }
+
+    .mini-card p {
+      font-size: 0.8rem;
+      margin: 0;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+
+    /* === STEP TIMELINE === */
+    .flow-steps {
+      margin: 1rem 0;
+    }
+
+    .flow-step {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 4px;
+      position: relative;
+      padding-left: 4px;
+    }
+
+    .flow-step::before {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 32px;
+      bottom: -4px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--border-hover), var(--border));
+    }
+
+    .flow-step:last-child::before {
+      display: none;
+    }
+
+    .step-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(56, 139, 253, 0.08);
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--accent);
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .step-body {
+      padding: 6px 0 16px;
+      flex: 1;
+    }
+
+    .step-body strong {
+      color: var(--text-1);
+      font-size: 0.88rem;
+    }
+
+    .step-body p {
+      font-size: 0.84rem;
+      margin: 4px 0 0;
+    }
+
+    /* === MERMAID === */
+    .mermaid-wrap {
+      background: #0d111e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 1.4rem 0;
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+    }
+
+    /* === HEADING ANCHOR === */
+    .h-anchor {
+      color: var(--text-3);
+      border-bottom: none;
+      font-size: 0.8em;
+      opacity: 0;
+      transition: opacity 0.15s;
+      cursor: pointer;
+      margin-left: auto;
+    }
+
+    h2:hover .h-anchor,
+    h3:hover .h-anchor {
+      opacity: 0.4;
+    }
+
+    .h-anchor:hover {
+      opacity: 1 !important;
+      color: var(--accent-soft);
+    }
+
+    /* === BACK TO TOP === */
+    #btt {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 42px;
+      height: 42px;
+      background: var(--bg-sidebar);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--text-1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s;
+      z-index: 999;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      font-size: 0.85rem;
+    }
+
+    #btt:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    #btt.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* === MOBILE === */
+    #mobile-bar {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 56px;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      z-index: 998;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mob-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-1);
+      font-size: 1.4rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    footer {
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 20px;
+      color: var(--text-3);
+      font-size: 0.8rem;
+      text-align: center;
+      font-family: var(--font-head);
+    }
+
+    @media (max-width: 992px) {
+      #sidebar {
+        transform: translateX(-100%);
+      }
+
+      #sidebar.open {
+        transform: translateX(0);
+      }
+
+      #main-content {
+        margin-left: 0;
+        padding: 80px 20px 60px;
+      }
+
+      #mobile-bar {
+        display: flex;
+      }
+
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Mobile Header -->
+  <div id="mobile-bar">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="logo"
+        style="background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-family:var(--font-head);font-weight:800;font-size:0.75rem;padding:4px 8px;border-radius:5px;">Docs</span>
+      <span style="font-family:var(--font-head);font-weight:700;font-size:1rem;color:var(--text-1);">WebQLCHCF</span>
+    </div>
+    <button class="mob-btn" id="mob-toggle" aria-label="Menu">☰</button>
+  </div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="sidebar-brand">
+      <span class="logo">Docs</span>
+      <span class="brand-text">WebQLCHCF</span>
+    </div>
+    <div class="sidebar-search">
+      <span class="s-icon">🔍</span>
+      <input type="text" id="search-input" placeholder="Tìm kiếm tài liệu...">
+    </div>
+    <nav id="sidebar-nav">
+
+      <!-- Group: Bắt đầu nhanh -->
+      <div class="nav-group">
+        <button class="nav-group-btn" aria-expanded="true" onclick="toggleNavGroup(this)">
+          🚀 Bắt đầu nhanh <span class="chevron">▾</span>
+        </button>
+        <ul class="nav-group-list">
+          <li><a href="#sec-0">0. Hướng dẫn chuyển máy</a></li>
+          <li class="sub"><a href="#sec-0-1">0.1 Yêu cầu môi trường</a></li>
+          <li class="sub"><a href="#sec-0-2">0.2 Thiết lập CSDL</a></li>
+          <li class="sub"><a href="#sec-0-3">0.3 Cấu hình kết nối</a></li>
+          <li class="sub"><a href="#sec-0-4">0.4 Biên dịch & vận hành</a></li>
+          <li class="sub"><a href="#sec-0-5">0.5 Tài khoản demo</a></li>
+          <li class="sub"><a href="#sec-0-6">0.6 Lỗi & khắc phục</a></li>
+        </ul>
+      </div>
+
+      <!-- Group: Tổng quan & Kiến trúc -->
+      <div class="nav-group">
+        <button class="nav-group-btn" aria-expanded="true" onclick="toggleNavGroup(this)">
+          🏗️ Tổng quan & Kiến trúc <span class="chevron">▾</span>
+        </button>
+        <ul class="nav-group-list">
+          <li><a href="#sec-1">1. Tổng quan dự án</a></li>
+          <li><a href="#sec-2">2. Công nghệ & lý do</a></li>
+          <li><a href="#sec-3">3. Kiến trúc tổng thể</a></li>
+          <li><a href="#sec-4">4. Program.cs</a></li>
+          <li class="sub"><a href="#sec-4-1">4.1 DI Services</a></li>
+          <li class="sub"><a href="#sec-4-2">4.2 Middleware Pipeline</a></li>
+          <li class="sub"><a href="#sec-4-3">4.3 Routing</a></li>
+          <li class="sub"><a href="#sec-4-4">4.4 Warm-up EF Core</a></li>
+          <li><a href="#sec-5">5. appsettings & launchSettings</a></li>
+        </ul>
+      </div>
+
+      <!-- Group: Dữ liệu & Mô hình -->
+      <div class="nav-group">
+        <button class="nav-group-btn" aria-expanded="true" onclick="toggleNavGroup(this)">
+          🗄️ Dữ liệu & Mô hình <span class="chevron">▾</span>
+        </button>
+        <ul class="nav-group-list">
+          <li><a href="#sec-6">6. SQL & Database</a></li>
+          <li class="sub"><a href="#sec-6-1">6.1 Cơ cấu bảng</a></li>
+          <li class="sub"><a href="#sec-6-2">6.2 Computed Columns</a></li>
+          <li class="sub"><a href="#sec-6-3">6.3 Stored Procedures</a></li>
+          <li><a href="#sec-7">7. AppDbContext.cs</a></li>
+          <li><a href="#sec-8">8. Security</a></li>
+          <li><a href="#sec-9">9. Models</a></li>
+          <li><a href="#sec-10">10. ViewModels</a></li>
+        </ul>
+      </div>
+
+      <!-- Group: Nghiệp vụ & Controllers -->
+      <div class="nav-group">
+        <button class="nav-group-btn" aria-expanded="true" onclick="toggleNavGroup(this)">
+          ⚙️ Nghiệp vụ & Controllers <span class="chevron">▾</span>
+        </button>
+        <ul class="nav-group-list">
+          <li><a href="#sec-11">11. Services</a></li>
+          <li><a href="#sec-12">12. Controllers</a></li>
+          <li><a href="#sec-13">13. Views</a></li>
+          <li><a href="#sec-14">14. CSS/JS tĩnh</a></li>
+          <li><a href="#sec-15">15. Ma trận quyền SRS</a></li>
+        </ul>
+      </div>
+
+      <!-- Group: Vận hành & Demo -->
+      <div class="nav-group">
+        <button class="nav-group-btn" aria-expanded="true" onclick="toggleNavGroup(this)">
+          🔄 Vận hành & Demo <span class="chevron">▾</span>
+        </button>
+        <ul class="nav-group-list">
+          <li><a href="#sec-16">16. Luồng nghiệp vụ</a></li>
+          <li class="sub"><a href="#sec-16-1">16.1 Đăng nhập & Check-in</a></li>
+          <li class="sub"><a href="#sec-16-2">16.2 Đăng xuất & Check-out</a></li>
+          <li class="sub"><a href="#sec-16-3">16.3 Đổi mật khẩu</a></li>
+          <li class="sub"><a href="#sec-16-4">16.4 POS Tại quán</a></li>
+          <li class="sub"><a href="#sec-16-5">16.5 POS Mang về</a></li>
+          <li class="sub"><a href="#sec-16-6">16.6 Thanh toán Tiền mặt</a></li>
+          <li class="sub"><a href="#sec-16-7">16.7 Thanh toán VietQR</a></li>
+          <li class="sub"><a href="#sec-16-8">16.8 Sửa món chờ QR</a></li>
+          <li class="sub"><a href="#sec-16-9">16.9 Hủy đơn hàng</a></li>
+          <li class="sub"><a href="#sec-16-10">16.10 QR hết hạn</a></li>
+          <li class="sub"><a href="#sec-16-11">16.11 Trả bàn</a></li>
+          <li><a href="#sec-17">17. Kiểm thử</a></li>
+          <li><a href="#sec-18">18. Mức độ web động</a></li>
+          <li><a href="#sec-19">19. Giới hạn hệ thống</a></li>
+          <li><a href="#sec-20">20. Kịch bản demo 19 bước</a></li>
+          <li><a href="#sec-21">21. Kết luận</a></li>
+        </ul>
+      </div>
+
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main id="main-content">
+
+    <!-- ===== HERO ===== -->
+    <header class="hero">
+      <span class="hero-label">📋 Tài liệu kỹ thuật chính thức</span>
+      <h1>WebQLCHCF</h1>
+      <p class="hero-sub">Hệ thống Quản lý Vận hành và Bán hàng Quán Cà Phê</p>
+      <p class="hero-desc">Tài liệu kỹ thuật toàn diện đặc tả kiến trúc hệ thống, cơ sở dữ liệu SQL Server quan hệ thực
+        tế, cơ chế tự động hóa nghiệp vụ qua stored procedure và mô-đun bảo mật phân quyền, kiểm soát ca làm.</p>
+      <div class="hero-tags">
+        <span class="hero-tag">ASP.NET Core MVC 10.0</span>
+        <span class="hero-tag">SQL Server DB</span>
+        <span class="hero-tag">Stored Procedures</span>
+        <span class="hero-tag">EF Core ORM</span>
+        <span class="hero-tag">Bootstrap 5 UI</span>
+        <span class="hero-tag">Session-Based Security</span>
+        <span class="hero-tag">Real-Time Audit Log</span>
+        <span class="hero-tag">VietQR dynamic integration</span>
+      </div>
+      <div class="quick-stats">
+        <div class="stat-card">
+          <div class="stat-num">17</div>
+          <div class="stat-label">Bảng dữ liệu</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">19</div>
+          <div class="stat-label">Controllers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">20+</div>
+          <div class="stat-label">Stored Procs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">3</div>
+          <div class="stat-label">Vai trò phân quyền</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== SECTION 0 ===== -->
+    <section class="doc-section" id="sec-0">
+      <h2><span class="section-icon icon-start">🚀</span> 0. Hướng dẫn nhanh khi chuyển sang máy tính khác</h2>
+      <p>Khi di chuyển dự án <code>WebQLCHCF</code> sang một máy tính mới, cần tuân thủ nghiêm ngặt các bước cấu hình
+        môi trường dưới đây để đảm bảo ứng dụng vận hành chính xác và kết nối thành công tới cơ sở dữ liệu.</p>
+
+      <h3 id="sec-0-1">0.1 Yêu cầu môi trường hệ thống</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Thành phần</th>
+              <th>Phiên bản / Yêu cầu tối thiểu</th>
+              <th>Vai trò trong hệ thống</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Hệ điều hành</strong></td>
+              <td>Windows 10 / 11</td>
+              <td>Môi trường triển khai và chạy thử nghiệm cục bộ.</td>
+            </tr>
+            <tr>
+              <td><strong>.NET SDK</strong></td>
+              <td>.NET SDK 10.0 (Target Framework: <code>net10.0</code>)</td>
+              <td>Trình biên dịch và chạy ứng dụng ASP.NET Core.</td>
+            </tr>
+            <tr>
+              <td><strong>DBMS</strong></td>
+              <td>SQL Server 2019 / 2022 (Express, Developer hoặc Enterprise)</td>
+              <td>Hệ quản trị cơ sở dữ liệu quan hệ lưu trữ toàn bộ dữ liệu.</td>
+            </tr>
+            <tr>
+              <td><strong>Công cụ quản trị</strong></td>
+              <td>SQL Server Management Studio (SSMS) v18+ hoặc Azure Data Studio</td>
+              <td>Thực thi script SQL, quản lý bảng, trigger và stored procedure.</td>
+            </tr>
+            <tr>
+              <td><strong>IDE</strong></td>
+              <td>Visual Studio 2022 (v17.12+) hoặc VS Code (kèm C# Dev Kit)</td>
+              <td>Môi trường phát triển và gỡ lỗi mã nguồn C#.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="sec-0-2">0.2 Quy trình thiết lập cơ sở dữ liệu bằng SQL Server</h3>
+      <ol>
+        <li><strong>Mở SSMS</strong> và kết nối tới SQL Server instance cục bộ (ví dụ: <code>localhost</code> hoặc
+          <code>.\SQLEXPRESS</code>).</li>
+        <li><strong>Mở file script SQL chính</strong> là <code>QLCHCF.sql</code> tại thư mục gốc của dự án.
+          <div class="callout callout-important">
+            <div class="callout-title">⚠️ CRITICAL REQUIREMENT</div>
+            <div class="callout-body">
+              <p>File <code>QLCHCF.sql</code> nằm ở thư mục gốc là file cơ sở dữ liệu chính thức và duy nhất của dự án.
+                Không sử dụng file <code>QLCHCF_Full.sql</code> vì đó không phải là file chính thức hiện tại của đồ án.
+              </p>
+            </div>
+          </div>
+        </li>
+        <li><strong>Xử lý cơ sở dữ liệu đã tồn tại</strong>:
+          <ul>
+            <li>Nếu trên SQL Server đã có database tên là <code>QLCHCF</code>, hãy tiến hành sao lưu nếu cần thiết, sau
+              đó drop database cũ:
+              <div class="code-box">
+                <div class="code-box-header"><span class="code-box-lang">SQL</span><button class="copy-btn"
+                    onclick="copyCode(this)">Copy</button></div>
+                <pre><code>USE master;
+ALTER DATABASE QLCHCF SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+DROP DATABASE QLCHCF;</code></pre>
+              </div>
+            </li>
+            <li>Chạy lại toàn bộ script <code>QLCHCF.sql</code> để tạo mới database cấu trúc chuẩn.</li>
+          </ul>
+        </li>
+        <li><strong>Kiểm tra tính toàn vẹn của Database</strong>:
+          <ul>
+            <li>Refresh <strong>Object Explorer</strong> trong SSMS và kiểm tra database <code>QLCHCF</code>.</li>
+            <li>Đảm bảo hệ thống đã tạo đủ <strong>17 bảng chính</strong> bao gồm: <code>Ban</code>,
+              <code>KhachHang</code>, <code>KhuyenMai</code>, <code>LoaiSP</code>, <code>NhanVien</code>,
+              <code>TaiKhoan</code>, <code>SanPham</code>, <code>HoaDon</code>, <code>CTHD</code>,
+              <code>ThanhToan</code>, <code>NguyenLieu</code>, <code>CongThuc</code>, <code>PhieuNhap</code>,
+              <code>CTPN</code>, <code>ChamCong</code>, <code>Luong</code>, <code>AuditLog</code>.</li>
+            <li>Đảm bảo các <strong>Stored Procedure</strong> cốt lõi đã tồn tại đầy đủ trong thư mục
+              <em>Programmability > Stored Procedures</em> (ví dụ: <code>TaiKhoan_DangNhap</code>,
+              <code>ChamCong_CheckIn</code>, <code>ChamCong_CheckOut</code>, <code>ThanhToan_TienMat</code>,
+              <code>ThanhToan_TaoQR</code>, <code>ThanhToan_XacNhanQRTheoPhien</code>, <code>Ban_KhachDi</code>,
+              <code>AuditLog_Them</code>,...).</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3 id="sec-0-3">0.3 Cấu hình chuỗi kết nối trong <code>appsettings.json</code></h3>
+      <p>File cấu hình liên kết ứng dụng với cơ sở dữ liệu nằm tại <code>appsettings.json</code>. Tùy thuộc vào cấu hình
+        SQL Server trên máy mới, hãy chỉnh sửa giá trị <code>Server</code> trong connection string:</p>
+      <ul>
+        <li><strong>Trường hợp dùng SQL Server mặc định (Default Instance / Developer / LocalHost):</strong>
+          <div class="code-box">
+            <div class="code-box-header"><span class="code-box-lang">JSON</span><button class="copy-btn"
+                onclick="copyCode(this)">Copy</button></div>
+            <pre><code>"ConnectionStrings": {
+  "DefaultConnection": "Server=localhost;Database=QLCHCF;Trusted_Connection=True;TrustServerCertificate=True;"
+}</code></pre>
+          </div>
+        </li>
+        <li><strong>Trường hợp dùng SQL Server Express (SQLExpress Instance):</strong>
+          <div class="code-box">
+            <div class="code-box-header"><span class="code-box-lang">JSON</span><button class="copy-btn"
+                onclick="copyCode(this)">Copy</button></div>
+            <pre><code>"ConnectionStrings": {
+  "DefaultConnection": "Server=.\\SQLEXPRESS;Database=QLCHCF;Trusted_Connection=True;TrustServerCertificate=True;"
+}</code></pre>
+          </div>
+        </li>
+      </ul>
+      <div class="callout callout-warning">
+        <div class="callout-title">⚠️ WARNING</div>
+        <div class="callout-body">
+          <p>Tên của connection string bắt buộc phải giữ nguyên là <code>DefaultConnection</code> vì
+            <code>Program.cs</code> đang đọc cấu hình trực tiếp từ key này. Luôn giữ
+            <code>TrustServerCertificate=True</code> để tránh các lỗi kết nối SSL trên môi trường local.</p>
+        </div>
+      </div>
+
+      <h3 id="sec-0-4">0.4 Biên dịch và vận hành ứng dụng Web</h3>
+      <p>Mở PowerShell hoặc Command Prompt tại thư mục gốc dự án và thực hiện chuỗi lệnh sau:</p>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">PowerShell</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code># Khôi phục các thư viện NuGet phụ thuộc
+dotnet restore
+
+# Biên dịch mã nguồn dự án
+dotnet build
+
+# Vận hành ứng dụng web
+dotnet run</code></pre>
+      </div>
+      <p>Theo cấu hình trong <code>Properties/launchSettings.json</code>, cổng chạy mặc định:</p>
+      <ul>
+        <li>HTTP: <code>http://localhost:5132</code></li>
+        <li>HTTPS: <code>https://localhost:7094</code></li>
+      </ul>
+      <p>Hệ thống sẽ tự động chuyển hướng người dùng chưa đăng nhập về trang <code>/Account/Login</code>.</p>
+
+      <h3 id="sec-0-5">0.5 Danh sách tài khoản thử nghiệm chuẩn (Demo Accounts)</h3>
+      <p>Dữ liệu tài khoản mẫu được trích xuất trực tiếp từ bảng <code>TaiKhoan</code> và <code>NhanVien</code> trong
+        database:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tên đăng nhập</th>
+              <th>Mật khẩu</th>
+              <th>Vai trò</th>
+              <th>Mã NV</th>
+              <th>Tên nhân viên</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong><code>qly_tram</code></strong></td>
+              <td><code>12345678</code></td>
+              <td><span class="badge badge-green">Quản Lý</span></td>
+              <td><code>NV01</code></td>
+              <td>Nguyễn Khánh Trâm</td>
+            </tr>
+            <tr>
+              <td><strong><code>pc_mai</code></strong></td>
+              <td><code>12345678</code></td>
+              <td><span class="badge badge-yellow">Pha Chế</span></td>
+              <td><code>NV02</code></td>
+              <td>Trần Tuyết Mai</td>
+            </tr>
+            <tr>
+              <td><strong><code>pc_bao</code></strong></td>
+              <td><code>12345678</code></td>
+              <td><span class="badge badge-yellow">Pha Chế</span></td>
+              <td><code>NV03</code></td>
+              <td>Lê Quốc Bảo</td>
+            </tr>
+            <tr>
+              <td><strong><code>pv_tu</code></strong></td>
+              <td><code>12345678</code></td>
+              <td><span class="badge badge-blue">Phục Vụ</span></td>
+              <td><code>NV04</code></td>
+              <td>Hoàng Anh Tú</td>
+            </tr>
+            <tr>
+              <td><strong><code>pv_vy</code></strong></td>
+              <td><code>12345678</code></td>
+              <td><span class="badge badge-blue">Phục Vụ</span></td>
+              <td><code>NV05</code></td>
+              <td>Phạm Thảo Vy</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-note">
+        <div class="callout-title">ℹ️ SECURE SEEDING NOTE</div>
+        <div class="callout-body">
+          <p>Mật khẩu trong dữ liệu mẫu hiện đang được lưu dưới dạng văn bản thuần (plain-text) để thuận tiện cho quá
+            trình kiểm thử đồ án. Khi vận hành thực tế, cần áp dụng thuật toán mã hóa băm mật khẩu bảo mật (ví dụ:
+            BCrypt, Argon2 hoặc PBKDF2) kèm theo muối (salt).</p>
+        </div>
+      </div>
+
+      <h3 id="sec-0-6">0.6 Các lỗi thường gặp và phương pháp khắc phục nhanh</h3>
+      <details class="collapse-section">
+        <summary>🔧 Xem danh sách lỗi & cách khắc phục</summary>
+        <div class="details-body">
+          <ul>
+            <li><strong>Lỗi: <code>SqlException (0x80131904): Cannot open database "QLCHCF"...</code></strong>
+              <ul>
+                <li><em>Nguyên nhân:</em> Database <code>QLCHCF</code> chưa được tạo hoặc chưa chạy script.</li>
+                <li><em>Khắc phục:</em> Mở SSMS, kết nối tới Server, mở file <code>QLCHCF.sql</code> và chạy toàn bộ
+                  script.</li>
+              </ul>
+            </li>
+            <li><strong>Lỗi:
+                <code>A connection was successfully established... error during pre-login handshake.</code></strong>
+              <ul>
+                <li><em>Nguyên nhân:</em> Thiếu <code>TrustServerCertificate=True</code> trong chuỗi kết nối.</li>
+                <li><em>Khắc phục:</em> Sửa <code>appsettings.json</code>, thêm
+                  <code>;TrustServerCertificate=True</code> vào cuối chuỗi.</li>
+              </ul>
+            </li>
+            <li><strong>Lỗi:
+                <code>System.InvalidOperationException: Unable to resolve service for type 'AppDbContext'...</code></strong>
+              <ul>
+                <li><em>Nguyên nhân:</em> Cấu hình đăng ký DbContext bị lỗi hoặc connection string trống.</li>
+                <li><em>Khắc phục:</em> Kiểm tra tên key <code>DefaultConnection</code> trong
+                  <code>appsettings.json</code> có khớp 100%.</li>
+              </ul>
+            </li>
+            <li><strong>Lỗi: <code>WebQLCHCF.exe process is locked</code></strong>
+              <ul>
+                <li><em>Nguyên nhân:</em> Tiến trình web cũ đang chạy ngầm.</li>
+                <li><em>Khắc phục:</em> Mở Task Manager, kết thúc tiến trình hoặc gõ
+                  <code>taskkill /f /im WebQLCHCF.exe</code>.</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== SECTION 1 ===== -->
+    <section class="doc-section" id="sec-1">
+      <h2><span class="section-icon icon-arch">📋</span> 1. Tổng quan dự án</h2>
+      <ul>
+        <li><strong>Tên dự án:</strong> <code>WebQLCHCF</code> (Hệ thống Web Quản Lý Cửa Hàng Cà Phê).</li>
+        <li><strong>Mục tiêu:</strong> Xây dựng giải pháp quản lý bán hàng, vận hành và nhân sự dành cho quán cà phê vừa
+          và nhỏ. Hỗ trợ POS bán hàng tại quầy, quản lý bàn linh hoạt, tích hợp thanh toán VietQR động, chấm công tự
+          động, tính lương, kiểm soát tồn kho và ghi vết Audit Log.</li>
+        <li><strong>Công nghệ cốt lõi:</strong> ASP.NET Core MVC (.NET 10.0), Entity Framework Core, SQL Server, Stored
+          Procedure, Bootstrap 5, Javascript, CSS3.</li>
+        <li><strong>Database chính:</strong> <code>QLCHCF</code> (khởi tạo bởi script <code>QLCHCF.sql</code>).</li>
+        <li><strong>Phân hệ chính:</strong>
+          <ol>
+            <li><em>Quản lý Bán hàng (Order & POS):</em> Lập hóa đơn, chọn món, áp dụng khuyến mãi, tích điểm, chọn bàn
+              trống, hỗ trợ mang về.</li>
+            <li><em>Quản lý Thanh toán:</em> Tiền mặt, VietQR động tự sinh kèm đếm ngược 15 phút, mock webhook xác nhận.
+            </li>
+            <li><em>Quản lý Vận hành quán:</em> Sơ đồ bàn vật lý (Trống, Đang phục vụ), bàn ảo mang về
+              (<code>MVE</code>).</li>
+            <li><em>Quản lý Danh mục:</em> CRUD Sản phẩm, Loại SP, Khuyến mãi, Khách hàng.</li>
+            <li><em>Quản lý Kho & Công thức:</em> Nguyên liệu, Công thức pha chế, Phiếu nhập kho, kiểm soát tồn kho.
+            </li>
+            <li><em>Nhân sự & Chấm công:</em> Hồ sơ NV, tài khoản phân quyền, auto check-in/out, tính lương tháng.</li>
+            <li><em>Thống kê & Giám sát:</em> Dashboard, doanh thu, Audit Log real-time.</li>
+          </ol>
+        </li>
+        <li><strong>Trạng thái:</strong> Dự án tích hợp động với DB SQL Server qua Stored Procedure. Toàn bộ POS, QR
+          VietQR, phân quyền Action và Audit Log hoạt động ổn định.</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 2 ===== -->
+    <section class="doc-section" id="sec-2">
+      <h2><span class="section-icon icon-arch">🔧</span> 2. Công nghệ và lý do sử dụng</h2>
+      <p>Dự án chọn lựa các công nghệ hiện đại, ổn định và phù hợp nhất:</p>
+      <details class="collapse-section" open>
+        <summary>Xem chi tiết công nghệ</summary>
+        <div class="details-body">
+          <ul>
+            <li><strong>ASP.NET Core MVC (.NET 10.0):</strong> Cấu trúc MVC phân tách rõ ràng, middleware mạnh, tối ưu
+              bộ nhớ và tốc độ, Routing linh hoạt và Session bền vững.</li>
+            <li><strong>Razor Views & Bootstrap 5:</strong> Razor trộn C# vào HTML để render động phía Server (SSR),
+              Bootstrap 5 + Bootstrap Icons phát triển UI responsive mà không phụ thuộc jQuery.</li>
+            <li><strong>Entity Framework Core (EF Core):</strong> ORM hướng đối tượng an toàn, tự động cấu hình ánh xạ
+              FK và composite key. Cầu nối gọi stored procedure qua ADO.NET hoặc SQL Interpolated.</li>
+            <li><strong>SQL Server & Stored Procedure:</strong> DBMS độ tin cậy cao, toàn vẹn dữ liệu qua
+              Constraints/FK. Logic nghiệp vụ nặng đóng gói trong SP nhằm đẩy tốc độ xử lý về DB, giảm thiểu độ trễ
+              mạng.</li>
+            <li><strong>Cơ chế Session:</strong> Lưu trạng thái phiên đăng nhập (<code>MaTK</code>, <code>MaNV</code>,
+              <code>TenNV</code>, <code>VaiTro</code>, <code>TenDangNhap</code>).</li>
+            <li><strong>PJAX & JavaScript:</strong> PJAX cập nhật động nội dung chính bằng AJAX + pushState, giỏ hàng
+              POS phía client, bộ đếm ngược QR thời gian thực.</li>
+            <li><strong>Audit Log Engine:</strong> Ghi nhận sự kiện nghiệp vụ quan trọng giúp kiểm soát rủi ro thất
+              thoát.</li>
+            <li><strong>VietQR Demo Integration:</strong> API <code>img.vietqr.io</code> sinh QR chứa mã ngân hàng, số
+              tiền, nội dung chuyển khoản tự động.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== SECTION 3 ===== -->
+    <section class="doc-section" id="sec-3">
+      <h2><span class="section-icon icon-arch">🏛️</span> 3. Kiến trúc tổng thể</h2>
+      <p>Hệ thống thiết kế theo kiến trúc 3 tầng (3-Layer Architecture) kết hợp MVC chuẩn ASP.NET Core:</p>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">Kiến trúc phân tầng</span></div>
+        <pre><code>[Browser / Client]
+        │ (HTTP Request / AJAX / PJAX)
+        ▼
+[Middleware Pipeline] (Routing -> Session -> RoleAuthorize Filter)
+        │
+        ▼
+[Controllers] (AccountController, OrderController, SanPhamController,...)
+        │
+        ├───► [ViewModels / InputModels] (Validate, nhận dữ liệu form)
+        │
+        ▼
+[Services Layer] (OrderService, ChamCongService, DashboardService, AuditLogService)
+        │
+        ├───► [AppDbContext] (Cầu nối mapping C# Entity và Stored Procedure)
+        │            │
+        │            ▼ (LINQ / Raw SQL / ExecuteSqlInterpolated)
+        └──────► [SQL Server Database] (Tables, Views, Persisted Computed Columns, Stored Procs)
+                     │
+                     ▼ (Dữ liệu trả về / Output Params / Result Set)
+[Razor Views] ◄──────┴
+        │ (Render HTML + CSS + JS)
+        ▼
+[Browser / Client] (Hiển thị UI/UX Premium, countdown QR, live charts, sidebar collapse)</code></pre>
+      </div>
+
+      <h3 id="sec-3-flow">Cơ chế luồng hoạt động:</h3>
+      <ol>
+        <li><strong>Client / Trình duyệt:</strong> Người dùng tương tác gửi HTTP request (GET/POST) hoặc kích hoạt PJAX.
+        </li>
+        <li><strong>Middleware Pipeline:</strong> Request đi qua Routing, Session và
+          <code>RoleAuthorizeAttribute</code>. Nếu chưa đăng nhập hoặc sai vai trò, redirect ngay.</li>
+        <li><strong>Controllers Layer:</strong> Tiếp nhận, kiểm tra <code>ModelState.IsValid</code>, chuyển tiếp xuống
+          Service.</li>
+        <li><strong>Services Layer:</strong> Logic nghiệp vụ: tính toán lương, chuẩn bị hóa đơn, tích điểm, gửi truy vấn
+          DB.</li>
+        <li><strong>AppDbContext & Database:</strong> Gọi LINQ/SQL/SP qua EF Core. SQL Server xử lý, kích trigger, cập
+          nhật Computed Column, trả kết quả.</li>
+        <li><strong>Razor Views:</strong> Controller nhận kết quả, kết hợp ViewModel, render HTML+CSS+JS gửi về client.
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== SECTION 4 ===== -->
+    <section class="doc-section" id="sec-4">
+      <h2><span class="section-icon icon-arch">⚡</span> 4. <code>Program.cs</code> hoạt động như thế nào</h2>
+      <p>File <code>Program.cs</code> là Entry Point của ứng dụng web, khởi dựng cấu hình dịch vụ (Services
+        Configuration) và thiết lập Middleware Pipeline.</p>
+
+      <h3 id="sec-4-1">4.1 Khởi tạo dịch vụ và Dependency Injection (DI)</h3>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">Program.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllersWithViews();
+builder.Services.AddSession();
+builder.Services.AddHttpContextAccessor();</code></pre>
+      </div>
+      <ul>
+        <li><strong><code>AddControllersWithViews()</code></strong>: Đăng ký dịch vụ MVC (Controllers, Razor Engine,
+          Model Binding, Validation).</li>
+        <li><strong><code>AddSession()</code></strong>: Đăng ký quản lý Session cục bộ.</li>
+        <li><strong><code>AddHttpContextAccessor()</code></strong>: Cho phép các lớp thuần C# (như
+          <code>AuditLogService</code>) truy cập thông tin request hiện tại.</li>
+      </ul>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">Program.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>builder.Services.AddDbContext&lt;AppDbContext&gt;(options =&gt;
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);</code></pre>
+      </div>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">Program.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>builder.Services.AddScoped&lt;IDashboardService, DashboardService&gt;();
+builder.Services.AddScoped&lt;IOrderService, OrderService&gt;();
+builder.Services.AddScoped&lt;IChamCongService, ChamCongService&gt;();
+builder.Services.AddScoped&lt;IAuditLogService, AuditLogService&gt;();</code></pre>
+      </div>
+      <p>Đăng ký DI theo phạm vi <strong>Scoped</strong> (một thực thể/HTTP request): <code>IDashboardService</code>,
+        <code>IOrderService</code>, <code>IChamCongService</code>, <code>IAuditLogService</code>.</p>
+
+      <h3 id="sec-4-2">4.2 Thiết lập Middleware Pipeline</h3>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">Program.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>var app = builder.Build();
+await WarmUpEfCoreAsync(app);
+
+if (!app.Environment.IsDevelopment()) {
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseSession();      // PHẢI ĐẶT TRƯỚC UseAuthorization
+app.UseAuthorization();</code></pre>
+      </div>
+      <div class="callout callout-important">
+        <div class="callout-title">⚠️ MIDDLEWARE SEQUENCE</div>
+        <div class="callout-body">
+          <p><strong>Thứ tự Middleware bất di bất dịch:</strong></p>
+          <ul>
+            <li><code>UseSession()</code> bắt buộc <strong>TRƯỚC</strong> <code>UseAuthorization()</code>. Nếu ngược
+              lại, <code>RoleAuthorizeAttribute</code> không đọc được Session → lỗi vòng lặp redirect vô tận.</li>
+            <li><code>UseStaticFiles()</code> phục vụ file tĩnh CSS/JS/ảnh từ <code>wwwroot</code> mà không đi qua MVC.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 id="sec-4-3">4.3 Định tuyến hệ thống (Routing Configuration)</h3>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">Program.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>app.MapControllerRoute(name: "controller-default", pattern: "{controller}/{action=Index}/{id?}");
+app.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Login}/{id?}");</code></pre>
+      </div>
+      <ul>
+        <li><strong>Route chung:</strong> Cấu trúc URL chuẩn MVC, mặc định action <code>Index</code>.</li>
+        <li><strong>Route mặc định:</strong> Trang chủ khởi tạo = <code>AccountController > Login</code>, buộc mọi người
+          dùng qua đăng nhập.</li>
+      </ul>
+
+      <h3 id="sec-4-4">4.4 Cơ chế Warm-up EF Core khi khởi động</h3>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">Program.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>static async Task WarmUpEfCoreAsync(WebApplication app)
+{
+    try {
+        using var scope = app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService&lt;AppDbContext&gt;();
+        _ = context.Model.GetEntityTypes().Count();
+        await context.Database.CanConnectAsync();
+    } catch (Exception ex) {
+        app.Logger.LogWarning(ex, "Không thể warm-up EF Core.");
+    }
+}</code></pre>
+      </div>
+      <ul>
+        <li><strong>Mục đích:</strong> Khắc phục Cold Start của EF Core. Biên dịch mapping metadata sẵn khi web khởi
+          động.</li>
+        <li><strong>Giải pháp:</strong> Gọi đếm entity + <code>CanConnectAsync</code>. Request đầu tiên sẽ nhanh hơn.
+          Nếu lỗi chỉ ghi warning, không crash ứng dụng.</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 5 ===== -->
+    <section class="doc-section" id="sec-5">
+      <h2><span class="section-icon icon-arch">📄</span> 5. <code>appsettings.json</code> và
+        <code>launchSettings.json</code></h2>
+      <h3 id="sec-5-1">5.1 <code>appsettings.json</code></h3>
+      <ul>
+        <li><code>ConnectionStrings</code>: Chuỗi kết nối <code>DefaultConnection</code>. Khi di chuyển máy, chỉ cần
+          thay đổi <code>Server</code>.</li>
+        <li><code>Logging</code>: Log Microsoft ở mức <code>Warning</code>, log nghiệp vụ ở mức
+          <code>Information</code>.</li>
+        <li><code>AllowedHosts</code>: <code>"*"</code> cho phép mọi domain.</li>
+      </ul>
+      <h3 id="sec-5-2">5.2 <code>Properties/launchSettings.json</code></h3>
+      <ul>
+        <li>Profile <code>http</code>: Kestrel tại <code>http://localhost:5132</code>.</li>
+        <li>Profile <code>https</code>: SSL tại <code>https://localhost:7094</code> song song HTTP <code>5132</code>.
+        </li>
+        <li><code>ASPNETCORE_ENVIRONMENT</code> = <code>"Development"</code> để bật Developer Exception Page.</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 6 ===== -->
+    <section class="doc-section" id="sec-6">
+      <h2><span class="section-icon icon-data">🗄️</span> 6. SQL và Database</h2>
+      <p>Cơ sở dữ liệu sử dụng SQL Server, đại diện bởi file script <code>QLCHCF.sql</code>.</p>
+
+      <h3 id="sec-6-1">6.1 Cơ cấu các bảng và ràng buộc khóa</h3>
+      <p>Database chia thành 4 phân vùng bảng nghiệp vụ chính:</p>
+      <div class="mermaid-wrap">
+        <div class="mermaid">
+          erDiagram
+          NhanVien ||--|| TaiKhoan : "co"
+          NhanVien ||--o| Luong : "nhan"
+          NhanVien ||--o{ ChamCong : "thuc_hien"
+          NhanVien ||--o{ HoaDon : "lap"
+          NhanVien ||--o{ PhieuNhap : "lap"
+          Ban ||--o{ HoaDon : "chua"
+          KhachHang ||--o{ HoaDon : "mua"
+          SanPham ||--o{ CTHD : "gom"
+          SanPham ||--o{ CongThuc : "dung"
+          NguyenLieu ||--o{ CongThuc : "dung"
+          NguyenLieu ||--o{ CTPN : "gom"
+          PhieuNhap ||--o{ CTPN : "chi_tiet"
+          HoaDon ||--o{ CTHD : "chi_tiet"
+          HoaDon ||--o{ ThanhToan : "co"
+          KhuyenMai ||--o{ CTHD : "ap_dung"
+        </div>
+      </div>
+
+      <details class="collapse-section" open>
+        <summary>📦 Danh mục bảng chi tiết (4 nhóm)</summary>
+        <div class="details-body">
+          <ol>
+            <li><strong>Danh mục:</strong>
+              <ul>
+                <li><code>Ban</code>: Danh sách bàn vật lý. <code>TrangThai</code> nhận:
+                  <strong><code>Trống</code></strong> và <strong><code>Đang phục vụ</code></strong>.
+                  <div class="callout callout-caution">
+                    <div class="callout-title">🚫 CRITICAL RULE</div>
+                    <div class="callout-body">
+                      <p>Nghiêm cấm ghi <code>ON/OFF</code>. Logic xử lý bàn dựa trên từ khóa tiếng Việt có dấu
+                        <code>Trống</code> và <code>Đang phục vụ</code>.</p>
+                    </div>
+                  </div>
+                  <ul>
+                    <li>Bàn mang về: mã <strong><code>MVE</code></strong>. Không chịu sơ đồ vật lý, không bao giờ đổi
+                      trạng thái.</li>
+                  </ul>
+                </li>
+                <li><code>LoaiSP</code>: Phân loại sản phẩm (Đồ uống, Bánh ngọt, Cà phê hạt,...).</li>
+                <li><code>SanPham</code>: Danh sách món. <code>TrangThai</code>: <code>Đang bán</code>,
+                  <code>Tạm ngưng</code>, <code>Ngừng bán</code>.</li>
+                <li><code>KhachHang</code>: Thông tin khách, SDT tìm kiếm, <code>DiemTichLuy</code>.</li>
+                <li><code>KhuyenMai</code>: <code>LoaiKM</code>: <code>Tiền mặt</code> hoặc <code>Phần trăm</code>.</li>
+              </ul>
+            </li>
+            <li><strong>Bán hàng & Thanh toán:</strong>
+              <ul>
+                <li><code>HoaDon</code>: <code>TrangThaiOrder</code>: <code>DangOrder</code>, <code>ChoThanhToan</code>,
+                  <code>HoanThanh</code>, <code>DaHuy</code>. <code>TrangThaiThanhToan</code>:
+                  <code>ChuaThanhToan</code>, <code>ChoThanhToanQR</code>, <code>DaThanhToan</code>,
+                  <code>HetHan</code>, <code>DaHuy</code>, <code>ChoKiemTra</code>. <code>PhuongThucThanhToan</code>:
+                  <code>TienMat</code> hoặc <code>QR</code>. <code>ThoiGianTao</code> ghi giờ phút thực tế,
+                  <code>NgayLap</code> chỉ phục vụ thống kê.</li>
+                <li><code>CTHD</code>: Chi tiết hóa đơn. Composite Key <code>{MaHD, MaSP}</code>.</li>
+                <li><code>ThanhToan</code>: Phiên giao dịch QR VietQR (<code>MaPhienThanhToan</code>), trạng thái, số
+                  tiền, mã giao dịch ngân hàng.</li>
+              </ul>
+            </li>
+            <li><strong>Nhân sự & Ca làm:</strong>
+              <ul>
+                <li><code>NhanVien</code>: Hồ sơ, chức vụ, <code>LuongTheoGio</code>.</li>
+                <li><code>TaiKhoan</code>: Tên đăng nhập, mật khẩu, vai trò.</li>
+                <li><code>ChamCong</code>: Ca làm việc khi đăng nhập.</li>
+                <li><code>Luong</code>: Bảng lương tính toán.</li>
+              </ul>
+            </li>
+            <li><strong>Hệ thống & Kho:</strong>
+              <ul>
+                <li><code>NguyenLieu</code>: Tồn kho nullable, <code>MucTonToiThieu</code> cảnh báo.</li>
+                <li><code>CongThuc</code>: Composite Key <code>{MaSP, MaNL}</code>, <code>DinhLuong</code>
+                  decimal(18,3).</li>
+                <li><code>PhieuNhap</code> & <code>CTPN</code>: Nhập kho. <code>CTPN</code> key
+                  <code>{MaPN, MaNL}</code>.</li>
+                <li><code>AuditLog</code>: Nhật ký vận hành. <strong>Chỉ INSERT, cấm UPDATE/DELETE.</strong>
+                  <div class="callout callout-important">
+                    <div class="callout-title">🔒 AUDIT INTEGRITY</div>
+                    <div class="callout-body">
+                      <p>Bảng <code>AuditLog</code> chỉ cho phép <code>INSERT</code>. Mọi
+                        <code>UPDATE</code>/<code>DELETE</code> đều bị cấm để ngăn chỉnh sửa lịch sử đối soát.</p>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+      </details>
+
+      <h3 id="sec-6-2">6.2 Các cột tính toán tự động vật lý (Persisted Computed Columns)</h3>
+      <div class="card-grid">
+        <div class="mini-card">
+          <div class="mini-card-title">CTHD.ThanhTien</div>
+          <p><code>[SoLuong] * [DonGia] PERSISTED</code> — Đảm bảo thành tiền luôn đúng, không bị sửa bởi C#.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">CTPN.ThanhTien</div>
+          <p><code>[SoLuong] * [DonGia] PERSISTED</code> — Tương tự cho chi tiết phiếu nhập kho.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">Luong.TongLuong</div>
+          <p><code>[LuongCoBan] + ISNULL([PhuCap],0) + ISNULL([Thuong],0) - ISNULL([Phat],0) PERSISTED</code> — Tổng
+            thực lĩnh tự động.</p>
+        </div>
+      </div>
+
+      <h3 id="sec-6-3">6.3 Danh sách Stored Procedure cốt lõi</h3>
+      <p>Toàn bộ luồng xử lý dữ liệu phức tạp đều được đưa xuống stored procedure:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nhóm</th>
+              <th>Stored Procedure</th>
+              <th>Logic nghiệp vụ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Đăng nhập</strong></td>
+              <td><code>TaiKhoan_DangNhap</code></td>
+              <td>Kiểm tra tài khoản, lấy thông tin nhân viên kèm vai trò.</td>
+            </tr>
+            <tr>
+              <td><strong>Chấm công</strong></td>
+              <td><code>ChamCong_CheckIn</code></td>
+              <td>Đăng ký ca làm mới, trạng thái <code>Đang làm</code>.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>ChamCong_CheckOut</code></td>
+              <td>Xác thực mật khẩu, chốt giờ, tính <code>TienCong</code> ca làm, chuyển <code>Đã chốt</code>.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>ChamCong_KiemTraDangLam</code></td>
+              <td>Kiểm tra nhân viên có ca chưa check-out để chặn quyền order.</td>
+            </tr>
+            <tr>
+              <td><strong>POS</strong></td>
+              <td><code>HoaDon_Them</code> / <code>Sua</code> / <code>Xoa</code></td>
+              <td>Tạo, sửa, hủy hóa đơn bán hàng.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>CTHD_Them</code> / <code>Sua</code> / <code>Xoa</code></td>
+              <td>CRUD chi tiết món. Tự động gọi <code>HoaDon_CapNhatTongTien</code>.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>HoaDon_CapNhatTongTien</code></td>
+              <td>Quét CTHD, tính tổng, áp khuyến mãi, cập nhật <code>TongTien</code>.</td>
+            </tr>
+            <tr>
+              <td><strong>Thanh toán</strong></td>
+              <td><code>ThanhToan_TienMat</code></td>
+              <td>Chốt tiền mặt: <code>HoanThanh</code> + <code>DaThanhToan</code>. Bàn giữ nguyên
+                <code>Đang phục vụ</code>.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>ThanhToan_TaoQR</code></td>
+              <td>Tạo phiên QR: mã phiên, số tiền, hết hạn <strong>15 phút</strong>. Trạng thái
+                <code>ChoThanhToanQR</code>.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>ThanhToan_XacNhanQRTheoPhien</code></td>
+              <td>Đối chiếu QR, nếu khớp → <code>HoanThanh</code> + <code>DaThanhToan</code>. Ghi mã giao dịch ngân
+                hàng.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>ThanhToan_QRHetHan</code></td>
+              <td>Phiên QR quá 15 phút: hủy hóa đơn + giải phóng bàn tự động.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>ThanhToan_XuLyTatCaQRHetHan</code></td>
+              <td>Quét định kỳ tất cả phiên QR hết hạn, tự động hủy + trả bàn.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>ThanhToan_SuaOrder</code></td>
+              <td>Chuyển hóa đơn về sửa món, hủy phiên QR cũ, giữ bàn nguyên.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>ThanhToan_HuyOrder</code></td>
+              <td>Hủy hóa đơn chưa thanh toán kèm lý do, giải phóng bàn.</td>
+            </tr>
+            <tr>
+              <td><strong>Vận hành</strong></td>
+              <td><code>Ban_KhachDi</code></td>
+              <td>Giải phóng bàn → <code>Trống</code>. Chặn nếu còn hóa đơn chưa thanh toán.</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>AuditLog_Them</code></td>
+              <td>Chèn nhật ký hoạt động kèm IP, User Agent.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 7 ===== -->
+    <section class="doc-section" id="sec-7">
+      <h2><span class="section-icon icon-data">🔗</span> 7. <code>AppDbContext.cs</code></h2>
+      <p>File <code>Data/AppDbContext.cs</code> là hạt nhân quản lý dữ liệu, định nghĩa ánh xạ thực thể (Entities
+        Mapping) và cấu hình DbSet để gọi SP.</p>
+
+      <h3 id="sec-7-1">7.1 Ánh xạ DbSet Entities</h3>
+      <p><code>AppDbContext</code> khai báo 17 <code>DbSet</code> tương ứng 17 bảng vật lý:</p>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">AppDbContext.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>public DbSet&lt;Ban&gt; Bans =&gt; Set&lt;Ban&gt;();
+public DbSet&lt;KhachHang&gt; KhachHangs =&gt; Set&lt;KhachHang&gt;();
+// ...
+public DbSet&lt;AuditLog&gt; AuditLogs =&gt; Set&lt;AuditLog&gt;();</code></pre>
+      </div>
+
+      <h3 id="sec-7-2">7.2 Cấu hình Key phức hợp và Cột tính toán</h3>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">AppDbContext.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>// Composite Key cho bảng chi tiết
+b.Entity&lt;CTHD&gt;().HasKey(x =&gt; new { x.MaHD, x.MaSP });
+b.Entity&lt;CTPN&gt;().HasKey(x =&gt; new { x.MaPN, x.MaNL });
+b.Entity&lt;CongThuc&gt;().HasKey(x =&gt; new { x.MaSP, x.MaNL });
+
+// Computed Column PERSISTED đồng bộ với SQL Server
+b.Entity&lt;Luong&gt;()
+    .Property(x =&gt; x.TongLuong)
+    .HasColumnType("money")
+    .ValueGeneratedOnAddOrUpdate()
+    .HasComputedColumnSql("[LuongCoBan] + ISNULL([PhuCap], 0) + ISNULL([Thuong], 0) - ISNULL([Phat], 0)", true);
+
+b.Entity&lt;CTHD&gt;()
+    .Property(x =&gt; x.ThanhTien)
+    .HasColumnType("money")
+    .ValueGeneratedOnAddOrUpdate()
+    .HasComputedColumnSql("[SoLuong] * [DonGia]", true);</code></pre>
+      </div>
+      <p><code>.ValueGeneratedOnAddOrUpdate()</code> + <code>true</code> (Persisted) giúp EF Core không ghi đè cột tự
+        sinh, tránh lỗi DBMS.</p>
+
+      <h3 id="sec-7-3">7.3 Ánh xạ SP Keyless ViewModels</h3>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">AppDbContext.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>public DbSet&lt;LoginResultViewModel&gt; LoginResults =&gt; Set&lt;LoginResultViewModel&gt;();
+public DbSet&lt;SanPhamViewModel&gt; SanPhamResults =&gt; Set&lt;SanPhamViewModel&gt;();
+// ...
+b.Entity&lt;LoginResultViewModel&gt;().HasNoKey();
+b.Entity&lt;SanPhamViewModel&gt;().HasNoKey();</code></pre>
+      </div>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">Gọi SP qua EF Core</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>var user = (await _context.LoginResults.FromSqlInterpolated(
+    $"EXEC TaiKhoan_DangNhap {model.TenDangNhap}, {model.MatKhau}"
+).ToListAsync()).FirstOrDefault();</code></pre>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 8 ===== -->
+    <section class="doc-section" id="sec-8">
+      <h2><span class="section-icon icon-security">🛡️</span> 8. Security</h2>
+      <p>Hệ thống triển khai bảo mật phân quyền đa lớp: UI/UX, Controller/Action và SQL Schema.</p>
+
+      <h3 id="sec-8-1">8.1 <code>AppRoles.cs</code> — Hằng số vai trò</h3>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">AppRoles.cs</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><code>public static class AppRoles
+{
+    public const string QuanLy = "Quản Lý";
+    public const string PhaChe = "Pha Chế";
+    public const string PhucVu = "Phục Vụ";
+    public static readonly string[] All = [QuanLy, PhaChe, PhucVu];
+}</code></pre>
+      </div>
+      <p>Tránh Magic Strings. Chuỗi hằng số phải khớp 100% với cột <code>VaiTro</code> trong bảng <code>TaiKhoan</code>.
+      </p>
+
+      <h3 id="sec-8-2">8.2 Custom Authorization Filter — <code>RoleAuthorizeAttribute.cs</code></h3>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">RoleAuthorizeAttribute.cs</span><button
+            class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><code>public override void OnActionExecuting(ActionExecutingContext context)
+{
+    var session = context.HttpContext.Session;
+    var maTK = session.GetString("MaTK");
+
+    // 1. Kiểm tra đăng nhập
+    if (string.IsNullOrWhiteSpace(maTK)) {
+        context.Result = new RedirectToActionResult("Login", "Account", null);
+        return;
+    }
+
+    // 2. Nếu không chỉ định vai trò, chỉ cần đăng nhập
+    if (_allowedRoles.Count == 0) { base.OnActionExecuting(context); return; }
+
+    // 3. Kiểm tra vai trò
+    var vaiTro = session.GetString("VaiTro");
+    if (string.IsNullOrWhiteSpace(vaiTro) || !_allowedRoles.Contains(vaiTro.Trim())) {
+        context.Result = new RedirectToActionResult("AccessDenied", "Account", null);
+        return;
+    }
+    base.OnActionExecuting(context);
+}</code></pre>
+      </div>
+      <p><strong>AccessDenied:</strong> Gõ URL trực tiếp vào route bị chặn → redirect về <code>403 Forbidden</code>.</p>
+
+      <h3 id="sec-8-3">8.3 Phân quyền Session & Role</h3>
+      <ul>
+        <li><strong>Client (UI/UX):</strong> Layout đọc <code>Session.GetString("VaiTro")</code> để ẩn/hiện menu sidebar
+          theo vai trò.</li>
+        <li><strong>Server (Logic chốt chặn):</strong> <code>[RoleAuthorize(AppRoles.QuanLy)]</code> trên
+          Controller/Action. Gõ URL trực tiếp vẫn bị chặn hoàn toàn.</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 9 ===== -->
+    <section class="doc-section" id="sec-9">
+      <h2><span class="section-icon icon-data">📦</span> 9. Models</h2>
+      <p>Các model trong thư mục <code>Models</code> đại diện cho các bảng SQL Server:</p>
+      <div class="card-grid">
+        <div class="mini-card">
+          <div class="mini-card-title">Ban.cs</div>
+          <p><code>MaBan</code> (PK 5), <code>TenBan</code>, <code>KhuVuc</code>, <code>TrangThai</code>. Bàn
+            <code>MVE</code> cho mang đi.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">HoaDon.cs</div>
+          <p><code>MaHD</code> (PK 9), <code>NgayLap</code>, <code>MaNV</code>, <code>MaKH</code>?,
+            <code>TongTien</code> (money), trạng thái Order/ThanhToan/PhuongThuc, thời gian tạo/thanh toán.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">CTHD.cs</div>
+          <p>Composite Key <code>{MaHD, MaSP}</code>, <code>SoLuong</code>, <code>DonGia</code>, <code>MaKM</code>?,
+            <code>ThanhTien</code> (persisted computed).</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">ThanhToan.cs</div>
+          <p><code>MaThanhToan</code> (PK auto), <code>MaPhienThanhToan</code>, <code>PhuongThuc</code>,
+            <code>SoTien</code>, <code>ThoiGianHetHan</code> (+15 phút), <code>MaGiaoDich</code>.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">AuditLog.cs</div>
+          <p><code>MaLog</code> (auto), <code>ThoiGian</code>, <code>MaNV</code>, <code>TenDangNhap</code>,
+            <code>ChucNang</code>, <code>HanhDong</code>, <code>DuLieuTruoc/Sau</code>, <code>DiaChiIP</code>,
+            <code>UserAgent</code>.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">KhuyenMai.cs</div>
+          <p><code>MaKM</code> (PK 5), <code>LoaiKM</code> (Tiền mặt/Phần trăm), <code>GiaTri</code>,
+            <code>NgayBatDau/KetThuc</code>, <code>TrangThai</code>.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">SanPham.cs</div>
+          <p><code>MaSP</code> (PK 5), <code>TenSP</code>, <code>DonGia</code>, <code>HinhAnh</code>,
+            <code>TrangThai</code>, <code>MaLoaiSP</code>.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">NhanVien.cs</div>
+          <p><code>MaNV</code> (PK 5), <code>TenNV</code>, <code>SDT</code>, <code>ChucVu</code>,
+            <code>LuongTheoGio</code>, <code>MaLuong</code> FK.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">TaiKhoan.cs</div>
+          <p><code>MaTK</code> (PK 5), <code>TenDangNhap</code>, <code>MatKhau</code> (plain-text demo),
+            <code>VaiTro</code>, <code>MaNV</code>.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">ChamCong.cs</div>
+          <p><code>MaCC</code> (auto), <code>MaNV</code>, Check-in/out, <code>TongPhut</code>, <code>TongGio</code>,
+            <code>TienCong</code>, <code>TrangThai</code>.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">Luong.cs</div>
+          <p><code>MaLuong</code> (PK 5), <code>LuongCoBan</code>, <code>PhuCap</code>, <code>Thuong</code>,
+            <code>Phat</code>, <code>TongLuong</code> (persisted computed).</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title">Khác</div>
+          <p><code>LoaiSP</code>, <code>KhachHang</code>, <code>NguyenLieu</code>, <code>CongThuc</code> ({MaSP,MaNL}),
+            <code>PhieuNhap</code>, <code>CTPN</code> ({MaPN,MaNL}).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 10 ===== -->
+    <section class="doc-section" id="sec-10">
+      <h2><span class="section-icon icon-data">🔀</span> 10. ViewModels</h2>
+      <p>ViewModels vận chuyển dữ liệu giữa View và Controller, tránh phơi bày entity trực tiếp:</p>
+      <details class="collapse-section" open>
+        <summary>Xem danh sách ViewModels</summary>
+        <div class="details-body">
+          <ul>
+            <li><strong><code>AccountViewModels.cs</code></strong>: <code>LoginViewModel</code>,
+              <code>LogoutConfirmViewModel</code> (xác nhận logout + check-out), <code>ChangePasswordViewModel</code>
+              (validation mật khẩu mạnh).</li>
+            <li><strong><code>OrderViewModels.cs</code></strong>: <code>OrderCreateViewModel</code> (POS, giỏ hàng, bàn
+              trống, KM), <code>OrderItemViewModel</code> (món đã chọn), <code>OrderReceiptViewModel</code> (hóa đơn +
+              QR), <code>PaymentInfoViewModel</code>, <code>PaymentCommandResultViewModel</code>.</li>
+            <li><strong><code>DashboardViewModels.cs</code></strong>: <code>DashboardViewModel</code> (doanh thu, bàn,
+              nhân sự, nguyên liệu, top SP, hóa đơn/phiếu nhập mới).</li>
+            <li><strong><code>ChamCongViewModels.cs</code></strong>: <code>ChamCongDangLamViewModel</code> (ca tạm tính
+              real-time), <code>ChamCongCheckoutResultViewModel</code>, <code>ChamCongCaLamThangViewModel</code>.</li>
+            <li><strong><code>SqlResultViewModels.cs</code></strong>: DTOs hứng SP result:
+              <code>LoginResultViewModel</code>, <code>SanPhamViewModel</code>, <code>NhanVienViewModel</code>,
+              <code>HoaDonViewModel</code>, <code>CTHDViewModel</code>, <code>PhieuNhapViewModel</code>,
+              <code>CongThucViewModel</code>, <code>AuditLogViewModel</code>.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== SECTION 11 ===== -->
+    <section class="doc-section" id="sec-11">
+      <h2><span class="section-icon icon-biz">⚙️</span> 11. Services</h2>
+      <p>Các lớp Service thực thi logic nghiệp vụ, tách biệt khỏi Controller:</p>
+
+      <details class="collapse-section" open>
+        <summary>11.1 <code>OrderService.cs</code> — Phân hệ Bán hàng & Thanh toán</summary>
+        <div class="details-body">
+          <p><strong>Mục đích:</strong> Xử lý vòng đời đơn hàng: mở giỏ, tạo hóa đơn, sửa, tạo QR VietQR, chốt thanh
+            toán, hủy đơn, giải phóng bàn.</p>
+          <ul>
+            <li><code>GetCreateModelAsync()</code>: Dựng POS, tự động chọn bàn trống nhỏ nhất, tải SP từ
+              <code>SanPham_DS</code>, KM từ <code>KhuyenMai_DangApDung</code>.</li>
+            <li><code>GetCreateModelForEditAsync(maHD)</code>: Tải hóa đơn cũ để sửa món.</li>
+            <li><code>CreateOrderAsync(model, maNV)</code>: Tạo hóa đơn, gọi <code>HoaDon_Them</code>, thêm CTHD, đổi
+              bàn sang <code>Đang phục vụ</code>, tích điểm (1 điểm/10.000đ).</li>
+            <li><code>UpdateOrderAsync(model, maNV)</code>: Sửa header + xóa CTHD cũ + tạo lại mới.</li>
+            <li><code>PayCashAsync(maHD)</code>: Gọi <code>ThanhToan_TienMat</code>.</li>
+            <li><code>CreateQrPaymentAsync(maHD)</code>: Gọi <code>ThanhToan_TaoQR</code>, dựng link VietQR compact2.
+            </li>
+            <li><code>ConfirmQrDemoAsync(maHD, maPhien)</code>: Mock webhook ngân hàng, sinh mã giao dịch
+              <code>DEMO-yyyyMMddHHmmssfff-MaThanhToan</code>.</li>
+            <li><code>CancelOrderAsync(maHD, lyDo)</code>: Gọi <code>ThanhToan_HuyOrder</code>, tự trả bàn.</li>
+            <li><code>CompleteTableAsync(maHD)</code>: Giải phóng bàn, gọi <code>Ban_KhachDi</code>.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="collapse-section">
+        <summary>11.2 <code>DashboardService.cs</code> — Thống kê Vận hành</summary>
+        <div class="details-body">
+          <p>Truy vấn các chỉ số real-time: doanh thu hôm nay/tháng (chỉ <code>DaThanhToan</code>), bàn hoạt động (trừ
+            <code>MVE</code>), NV online (<code>Đang làm</code>), nguyên liệu sắp hết, top 5 SP bán chạy, 5 hóa
+            đơn/phiếu nhập mới nhất.</p>
+        </div>
+      </details>
+
+      <details class="collapse-section">
+        <summary>11.3 <code>ChamCongService.cs</code> — Ca làm & Tiền công</summary>
+        <div class="details-body">
+          <ul>
+            <li><code>AutoCheckInOnLoginAsync(maNV)</code>: Gọi <code>ChamCong_CheckIn</code> khi đăng nhập thành công.
+            </li>
+            <li><code>GetDangLamByNhanVienAsync(maNV)</code>: Lấy ca hiện tại, tính tạm số phút/giờ/tiền công hiển thị
+              trên topbar.</li>
+            <li><code>CheckOutAndGetResultAsync(maNV, matKhau)</code>: Gọi <code>ChamCong_CheckOut</code>, xác thực mật
+              khẩu tại database.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="collapse-section">
+        <summary>11.4 <code>AuditLogService.cs</code> — Giám sát & Ghi vết</summary>
+        <div class="details-body">
+          <p><code>LogAsync(...)</code>: Trích Session (<code>MaNV</code>, <code>TenDangNhap</code>,
+            <code>VaiTro</code>), lấy IP + User-Agent từ <code>HttpContext</code>, gọi <code>AuditLog_Them</code>.</p>
+          <div class="callout callout-note">
+            <div class="callout-title">ℹ️ FAULT TOLERANCE</div>
+            <div class="callout-body">
+              <p>Toàn bộ <code>LogAsync</code> bọc trong <code>try-catch</code>. Nếu ghi log lỗi, chỉ ghi Warning,
+                <strong>tuyệt đối không ném exception làm rollback giao dịch bán hàng chính</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== SECTION 12 ===== -->
+    <section class="doc-section" id="sec-12">
+      <h2><span class="section-icon icon-biz">🎛️</span> 12. Controllers và Action chính thức</h2>
+      <p>Dự án có <strong>19 Controller</strong> điều hướng request:</p>
+
+      <details class="collapse-section" open>
+        <summary>12.1 <code>AccountController.cs</code> — Đăng ký, Đăng nhập, Nhân sự</summary>
+        <div class="details-body">
+          <p><strong>Quyền:</strong> Công khai (<code>Login</code>), đăng nhập (<code>Logout</code>,
+            <code>ChangePassword</code>).</p>
+          <ul>
+            <li><code>Login()</code> <code>[GET]</code>: Nếu có session → redirect theo vai trò. Nếu chưa → trang đăng
+              nhập.</li>
+            <li><code>Login(LoginViewModel)</code> <code>[POST]</code>: Gọi <code>TaiKhoan_DangNhap</code>, lưu Session,
+              auto check-in ca làm, redirect (QL→<code>/Home</code>, khác→<code>/Order/Create</code>).</li>
+            <li><code>Logout()</code> <code>[GET]</code>: Lấy ca làm hiện tại, hiển thị xác nhận chốt ca.</li>
+            <li><code>Logout(LogoutConfirmViewModel)</code> <code>[POST]</code>: Xác thực mật khẩu → check-out → xóa
+              Session → redirect Login.</li>
+            <li><code>CheckoutResult()</code> <code>[GET]</code>: Thống kê tiền công ca vừa chốt.</li>
+            <li><code>ChangePassword()</code> <code>[GET/POST]</code>: Validation mật khẩu mạnh (8 ký tự, 1 số, 1 đặc
+              biệt, không trùng tên). Ghi Audit Log (không log mật khẩu).</li>
+            <li><code>AccessDenied()</code>: Trả <code>403 Forbidden</code>.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="collapse-section">
+        <summary>12.2 <code>OrderController.cs</code> — POS bán hàng</summary>
+        <div class="details-body">
+          <p><strong>Quyền:</strong> <code>[RoleAuthorize]</code> + kiểm tra check-in.</p>
+          <ul>
+            <li><code>Create(editMaHD?)</code> <code>[GET]</code>: Kiểm tra check-in, tải giỏ hàng (mới hoặc sửa).</li>
+            <li><code>Create(OrderCreateViewModel)</code> <code>[POST]</code>: Tạo/sửa hóa đơn, ghi Audit Log kèm JSON
+              sản phẩm.</li>
+            <li><code>Receipt(id)</code> <code>[GET]</code>: Chi tiết hóa đơn + QR VietQR + countdown.</li>
+            <li><code>CompleteTable(id)</code> <code>[POST]</code>: Trả bàn.</li>
+            <li><code>PayCash(id, ghiChu?)</code> <code>[POST]</code>: Thanh toán tiền mặt.</li>
+            <li><code>CreateQrPayment(id)</code> <code>[POST]</code>: Sinh phiên QR 15 phút.</li>
+            <li><code>ConfirmQrDemo(id, maPhien)</code> <code>[POST]</code>: Mock xác nhận ngân hàng.</li>
+            <li><code>ExpireQr(id)</code> <code>[POST]</code>: Hết hạn QR + trả bàn.</li>
+            <li><code>CancelOrder(id, lyDo)</code> <code>[POST]</code>: Hủy đơn + trả bàn.</li>
+            <li><code>EditOrder(id)</code> <code>[POST]</code>: Chuyển về sửa món, hủy QR cũ.</li>
+            <li><code>SearchCustomers(keyword)</code> <code>[GET]</code>: Tìm KH theo SĐT (AJAX).</li>
+            <li><code>QuickCreateCustomer(model)</code> <code>[POST]</code>: Tạo nhanh KH tại POS.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="collapse-section">
+        <summary>12.3–12.9 Các Controller khác</summary>
+        <div class="details-body">
+          <div class="card-grid">
+            <div class="mini-card">
+              <div class="mini-card-title">HoaDonController</div>
+              <p>QL: CRUD đầy đủ; PC/PV: Chỉ xem. Xóa hóa đơn <code>DaThanhToan</code> bị DB chặn.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">SanPhamController</div>
+              <p><code>[QL]</code> CRUD SP. Bộ lọc tìm kiếm bỏ dấu Việt. Sửa giá → Audit Log chi tiết.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">KhuyenMaiController</div>
+              <p>Xem: mọi role. CRUD: QL. Validate giá trị KM (% ≤ 100, tiền ≤ 100M).</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">AuditLogController</div>
+              <p><code>[QL]</code> Xem nhật ký SP <code>AuditLog_DS</code>. Bộ lọc + giới hạn 200-1000 dòng. Không có
+                action xóa/sửa.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">ThongKeController</div>
+              <p><code>[QL]</code> Doanh thu theo ngày, SP bán chạy, nhập hàng theo tháng.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">BanController</div>
+              <p><code>[QL,PV]</code> Sơ đồ bàn, CRUD, <code>CustomerLeaves</code> trả bàn thủ công.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">TaiKhoanController</div>
+              <p><code>[QL]</code> CRUD tài khoản đăng nhập. Tự sinh mã TK.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">NhanVienController</div>
+              <p><code>[QL]</code> CRUD hồ sơ nhân sự, liên kết FK bảng Lương.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">LuongController</div>
+              <p><code>[QL]</code> CRUD lương, xem ca làm tháng + tổng lương NV.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">NguyenLieuController</div>
+              <p><code>[QL,PC]</code> CRUD nguyên liệu. PV bị chặn.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">PhieuNhapController</div>
+              <p><code>[QL]</code> Nhập kho → cập nhật <code>SoLuongTon</code> + tổng chi phí.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">CongThucController</div>
+              <p><code>[QL,PC]</code> Định lượng SP-NL. PV bị chặn.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">LoaiSP / KhachHang</div>
+              <p>LoaiSP: <code>[QL]</code>. KhachHang: <code>[QL,PV]</code> CRUD + điểm tích lũy.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-title">BaseController + NextCodeHelper</div>
+              <p>Helper: <code>FormatMoney</code>, <code>FriendlyControllerError</code>, tự sinh mã tiếp theo.</p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== SECTION 13 ===== -->
+    <section class="doc-section" id="sec-13">
+      <h2><span class="section-icon icon-biz">🎨</span> 13. Views</h2>
+      <p>Giao diện Premium Dark Mode, Bootstrap 5:</p>
+      <ul>
+        <li><strong><code>Shared/_Layout.cshtml</code></strong>: Layout gốc. Sidebar responsive theo vai trò, đồng hồ ca
+          làm real-time, localStorage ghi nhớ trạng thái sidebar.</li>
+        <li><strong><code>Account</code></strong>: <code>Login</code>, <code>LogoutConfirm</code>,
+          <code>CheckoutResult</code>, <code>ChangePassword</code>.</li>
+        <li><strong><code>Home/Index</code></strong>: Dashboard Glassmorphic Card, cảnh báo nguyên liệu, top SP bán
+          chạy.</li>
+        <li><strong><code>Order/Create</code></strong>: POS 2 cột — trái: danh mục + lọc/tìm kiếm; phải: giỏ hàng, KH,
+          KM.</li>
+        <li><strong><code>Order/Receipt</code></strong>: Hóa đơn chi tiết + VietQR động + countdown 15 phút + nút Demo.
+        </li>
+        <li><strong><code>HoaDon</code></strong>: Badge trạng thái thanh toán (Xanh/Đỏ/Vàng).</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 14 ===== -->
+    <section class="doc-section" id="sec-14">
+      <h2><span class="section-icon icon-biz">📁</span> 14. <code>wwwroot</code> CSS/JS</h2>
+      <ul>
+        <li><strong><code>css/site.css</code></strong>: Premium Dark Mode, Glassmorphism
+          (<code>backdrop-filter: blur(10px)</code>), hiệu ứng glow khi hover.</li>
+        <li><strong><code>js/site.js</code></strong>: Sidebar toggle + localStorage, bộ máy PJAX cục bộ, countdown QR tự
+          động (về 0 → POST hết hạn).</li>
+        <li><strong><code>js/order-create.js</code></strong>: Bộ lọc tìm kiếm bỏ dấu, giỏ hàng động, áp KM tạm tính, tìm
+          KH AJAX + tạo nhanh.</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 15 ===== -->
+    <section class="doc-section" id="sec-15">
+      <h2><span class="section-icon icon-security">🔐</span> 15. Phân quyền theo đặc tả SRS (Security Matrix)</h2>
+
+      <h3 id="sec-15-1">15.1 Ma trận phân quyền chi tiết</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Phân hệ</th>
+              <th style="text-align:center">Quản Lý</th>
+              <th style="text-align:center">Pha Chế</th>
+              <th style="text-align:center">Phục Vụ</th>
+              <th>Cơ chế</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Đăng nhập & Chấm công</strong></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td>Session & SP</td>
+            </tr>
+            <tr>
+              <td><strong>Đổi mật khẩu</strong></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td><code>[RoleAuthorize]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Dashboard</strong></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-red">❌ Chặn</span></td>
+              <td style="text-align:center"><span class="badge badge-red">❌ Chặn</span></td>
+              <td><code>[QL]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Order/POS</strong></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td>Check-in trước khi bán</td>
+            </tr>
+            <tr>
+              <td><strong>Hóa đơn</strong></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-yellow">Chỉ xem</span></td>
+              <td style="text-align:center"><span class="badge badge-yellow">Chỉ xem</span></td>
+              <td><code>[QL]</code> khi CRUD</td>
+            </tr>
+            <tr>
+              <td><strong>Khách hàng</strong></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-red">❌ Chặn</span></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td><code>[QL,PV]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Bàn</strong></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-yellow">Chỉ xem</span></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td><code>[QL,PV]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Nguyên liệu / Công thức / SP / Loại SP / Phiếu nhập</strong></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-yellow">Chỉ xem</span></td>
+              <td style="text-align:center"><span class="badge badge-red">❌ Chặn</span></td>
+              <td><code>[QL,PC]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Khuyến mãi / NV / TK / Lương / Thống kê / AuditLog</strong></td>
+              <td style="text-align:center"><span class="badge badge-green">Đầy đủ</span></td>
+              <td style="text-align:center"><span class="badge badge-red">❌ Chặn</span></td>
+              <td style="text-align:center"><span class="badge badge-red">❌ Chặn</span></td>
+              <td><code>[QL]</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="sec-15-2">15.2 Nguyên tắc bảo mật vận hành</h3>
+      <ul>
+        <li><strong>Sidebar chỉ là phần nổi:</strong> Ẩn/hiện menu giúp UX gọn gàng.</li>
+        <li><strong>Chốt chặn Action-Level:</strong> <code>RoleAuthorizeAttribute</code> chặn đứng →
+          <code>403 AccessDenied</code>. Gõ URL trực tiếp vẫn bị chặn.</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 16 ===== -->
+    <section class="doc-section" id="sec-16">
+      <h2><span class="section-icon icon-ops">🔄</span> 16. Luồng nghiệp vụ chính</h2>
+
+      <h3 id="sec-16-1">16.1 Đăng nhập & Tự động Check-in ca làm</h3>
+      <div class="code-box">
+        <div class="code-box-header"><span class="code-box-lang">Luồng Đăng nhập & Check-in</span></div>
+        <pre><code>Nhân viên vào trang Web 
+  -> Nhập thông tin đăng nhập 
+  -> Hệ thống gọi TaiKhoan_DangNhap 
+  -> Khởi tạo Session nhân viên 
+  -> Tự động gọi ChamCong_CheckIn (nếu chưa có ca) 
+  -> Chuyển hướng về Home (Quản lý) hoặc POS (Pha chế/Phục vụ)</code></pre>
+      </div>
+
+      <h3 id="sec-16-2">16.2 Đăng xuất & Bắt buộc Check-out chốt ca</h3>
+      <ul>
+        <li>Click "Đăng xuất" → trang <code>/Account/Logout</code> (LogoutConfirm).</li>
+        <li>Hiển thị số giờ đã làm tam tính.</li>
+        <li><strong>Bắt buộc nhập mật khẩu</strong> → POST → <code>ChamCong_CheckOut</code> xác thực → chốt giờ, tính
+          lương ca, xóa session.</li>
+      </ul>
+
+      <h3 id="sec-16-3">16.3 Luồng đổi mật khẩu</h3>
+      <ul>
+        <li>Xác thực mật khẩu hiện tại.</li>
+        <li>Kiểm tra: tối thiểu 8 ký tự, 1 chữ số, 1 ký tự đặc biệt, không trùng tên đăng nhập.</li>
+        <li>Lưu mật khẩu mới + ghi Audit Log (không ghi mật khẩu thô).</li>
+      </ul>
+
+      <h3 id="sec-16-4">16.4 Luồng POS Bán hàng Tại quán</h3>
+      <div class="flow-steps">
+        <div class="flow-step"><span class="step-num">1</span>
+          <div class="step-body"><strong>Vào POS</strong>
+            <p>Hệ thống kiểm tra check-in. Chưa check-in → chặn quyền order.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">2</span>
+          <div class="step-body"><strong>Chọn món</strong>
+            <p>Điều chỉnh số lượng, hệ thống tự động tính tiền.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">3</span>
+          <div class="step-body"><strong>Tìm khách hàng</strong>
+            <p>Tìm theo SĐT (từ 3 số), tạo nhanh KH tại POS. Áp dụng khuyến mãi.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">4</span>
+          <div class="step-body"><strong>Chọn bàn tự động</strong>
+            <p>Hệ thống quét bàn trống nhỏ nhất phù hợp.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">5</span>
+          <div class="step-body"><strong>Tạo hóa đơn</strong>
+            <p>Trạng thái: <code>ChoThanhToan</code> / <code>ChuaThanhToan</code>. Bàn → <code>Đang phục vụ</code>. Tích
+              điểm (1 điểm/10.000đ). Chuyển Receipt.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3 id="sec-16-5">16.5 Luồng POS Mang về</h3>
+      <ul>
+        <li>Chọn "Mang về" → gán bàn ảo <code>MVE</code>.</li>
+        <li>Không thay đổi bàn vật lý, không cần dọn/trả bàn.</li>
+      </ul>
+
+      <h3 id="sec-16-6">16.6 Thanh toán Tiền mặt</h3>
+      <ul>
+        <li>Tại Receipt, chọn "Tiền mặt". Gọi <code>ThanhToan_TienMat</code>.</li>
+        <li>Hóa đơn → <code>HoanThanh</code> / <code>DaThanhToan</code> / <code>TienMat</code>.</li>
+        <li><strong>Bàn vật lý giữ nguyên <code>Đang phục vụ</code></strong> để nhân viên dọn dẹp trước.</li>
+      </ul>
+
+      <h3 id="sec-16-7">16.7 Thanh toán VietQR động</h3>
+      <div class="flow-steps">
+        <div class="flow-step"><span class="step-num">1</span>
+          <div class="step-body"><strong>Chọn "QR"</strong>
+            <p>Gọi <code>ThanhToan_TaoQR</code>: sinh phiên, số tiền, nội dung, hết hạn <strong>15 phút</strong>.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">2</span>
+          <div class="step-body"><strong>Hiển thị QR</strong>
+            <p>VietQR API sinh ảnh QR chứa đầy đủ thông tin thụ hưởng. Countdown 15 phút real-time.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">3</span>
+          <div class="step-body"><strong>Demo xác nhận</strong>
+            <p>Click "Xác nhận chuyển khoản (Demo)" → <code>ThanhToan_XacNhanQRTheoPhien</code> → sinh mã giao dịch →
+              <code>HoanThanh</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3 id="sec-16-8">16.8 Sửa món khi chờ QR</h3>
+      <ul>
+        <li>Click "Sửa order" → <code>ThanhToan_SuaOrder</code>: hủy phiên QR cũ, chuyển về sửa món, bàn giữ nguyên.
+        </li>
+        <li>Redirect về POS <code>/Order/Create?editMaHD=...</code> tải lại giỏ hàng cũ.</li>
+      </ul>
+
+      <h3 id="sec-16-9">16.9 Hủy hóa đơn chưa thanh toán</h3>
+      <ul>
+        <li>Click "Hủy hóa đơn" + nhập lý do → <code>ThanhToan_HuyOrder</code>.</li>
+        <li>Hóa đơn → <code>DaHuy</code>. <strong>Bàn vật lý tự động trả về <code>Trống</code></strong> ngay lập tức.
+        </li>
+      </ul>
+
+      <h3 id="sec-16-10">16.10 Xử lý hết hạn phiên QR</h3>
+      <ul>
+        <li>Countdown về 0 hoặc quét định kỳ <code>ThanhToan_XuLyTatCaQRHetHan</code>:</li>
+        <li>Phiên QR → <code>HetHan</code>. Hóa đơn → <code>DaHuy</code>. <strong>Bàn vật lý tự động trả
+            <code>Trống</code></strong> (chỉ áp dụng Tại quán).</li>
+      </ul>
+
+      <h3 id="sec-16-11">16.11 Khách đi & Trả bàn thủ công</h3>
+      <ul>
+        <li>Khách thanh toán xong + ra về. NV dọn dẹp → click "Trả bàn".</li>
+        <li>Gọi <code>Ban_KhachDi</code>: bàn → <code>Trống</code>. Ghi Audit Log.</li>
+        <li><em>Ràng buộc:</em> Nếu còn hóa đơn chưa thanh toán, hệ thống ngăn trả bàn.</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 17 ===== -->
+    <section class="doc-section" id="sec-17">
+      <h2><span class="section-icon icon-ops">✅</span> 17. Kiểm thử và chất lượng</h2>
+      <div class="callout callout-note">
+        <div class="callout-title">ℹ️ HISTORICAL TEST RECORDS</div>
+        <div class="callout-body">
+          <p>Các kết quả dưới đây ghi nhận từ các lượt kiểm thử trước. Lượt này chỉ cập nhật tài liệu HTML. Trước khi
+            demo hoặc chuyển máy, cần chạy lại build và test runtime.</p>
+        </div>
+      </div>
+      <ul>
+        <li><strong>Build:</strong> <code>dotnet build</code> thành công, 0 lỗi biên dịch trên <code>net10.0</code>.
+        </li>
+        <li><strong>Dashboard & KM:</strong> Tải động ổn định. KM hiển thị đúng <code>%</code> / <code>đ</code>.</li>
+        <li><strong>Audit Log:</strong> Ghi vết đổi mật khẩu, sửa giá, lập order, hủy đơn, trả bàn. Đầy đủ IP +
+          User-Agent + Payload.</li>
+        <li><strong>Phân quyền:</strong> PV truy cập route QL → chặn đứng <code>403 AccessDenied</code>.</li>
+        <li><strong>Tìm kiếm SP:</strong> Bộ lọc không dấu hoạt động bình thường.</li>
+        <li><strong>Đổi mật khẩu:</strong> Mật khẩu yếu/trùng tên → bắt lỗi chuẩn xác. Đổi thành công → đăng nhập bình
+          thường.</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 18 ===== -->
+    <section class="doc-section" id="sec-18">
+      <h2><span class="section-icon icon-ops">🌐</span> 18. Web động và mức độ dữ liệu thật</h2>
+      <ul>
+        <li><strong>Mức độ tích hợp:</strong> Phần lớn dữ liệu nghiệp vụ truy vấn động từ SQL Server. Đánh giá khoảng
+          <strong>96–98/100</strong> điểm kỹ thuật.</li>
+        <li><strong>Các mô-đun dữ liệu thực:</strong> POS, Hóa đơn, SP, Bàn, KM, Dashboard, AuditLog, Chấm công, Lương
+          hoạt động trực tiếp trên DB thật qua SP và EF Core.</li>
+        <li><strong>Hằng số nghiệp vụ hợp lệ:</strong> Mã bàn ảo <code>MVE</code>, trạng thái
+          <code>ChoThanhToan</code>/<code>DaThanhToan</code> trong <code>OrderWorkflowConstants</code>, cấu hình VietQR,
+          text nhãn UI — là hằng số kiến trúc hợp lệ.</li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 19 ===== -->
+    <section class="doc-section" id="sec-19">
+      <h2><span class="section-icon icon-security">⚠️</span> 19. Giới hạn hiện tại</h2>
+      <ul>
+        <li><strong>Plain-text Password:</strong> Mật khẩu demo lưu văn bản thuần. Cần mã hóa (BCrypt/Argon2/PBKDF2)
+          trước khi vận hành thực tế.</li>
+        <li><strong>Độ phức tạp tài khoản mẫu:</strong> Tài khoản seed đơn giản (<code>pv_tu</code>,
+          <code>12345678</code>), chưa đạt tiêu chuẩn SRS đầy đủ. Màn hình <code>ChangePassword</code> đã có validation
+          mạnh hơn.</li>
+        <li><strong>Webhook VietQR:</strong> Đang là Demo (nút bấm giả lập). Thực tế cần tích hợp API ngân hàng +
+          Webhook biến động số dư.</li>
+        <li><strong>Trừ tồn kho tự động:</strong> Chưa trừ kho âm tức thời tại transaction POS để tránh khóa bảng khi
+          đông khách.</li>
+        <li><strong>Audit Log Fault Tolerance:</strong> Ghi log sau nghiệp vụ chính. Nếu lỗi → chỉ Warning, không
+          rollback bán hàng.</li>
+        <li><strong>Chuyển đổi máy:</strong> Cần cập nhật Server trong connection string <code>appsettings.json</code>.
+        </li>
+      </ul>
+    </section>
+
+    <!-- ===== SECTION 20 ===== -->
+    <section class="doc-section" id="sec-20">
+      <h2><span class="section-icon icon-ops">🎬</span> 20. Kịch bản demo 19 bước</h2>
+      <p>Luồng demo khép kín cho buổi bảo vệ đồ án:</p>
+      <div class="flow-steps">
+        <div class="flow-step"><span class="step-num">1</span>
+          <div class="step-body"><strong>Khởi tạo</strong>
+            <p>Mở SSMS, chạy <code>QLCHCF.sql</code> để làm sạch và khởi dựng dữ liệu mới.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">2</span>
+          <div class="step-body"><strong>Khởi động</strong>
+            <p><code>dotnet run</code>, mở <code>http://localhost:5132</code>.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">3</span>
+          <div class="step-body"><strong>Đăng nhập</strong>
+            <p>Tài khoản QL <code>qly_tram</code> / <code>12345678</code>.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">4</span>
+          <div class="step-body"><strong>Dashboard</strong>
+            <p>Doanh thu = 0đ, sơ đồ bàn trống.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">5</span>
+          <div class="step-body"><strong>Đổi mật khẩu</strong>
+            <p>Đổi và đăng nhập lại để chứng minh tính năng.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">6</span>
+          <div class="step-body"><strong>Mở POS</strong>
+            <p>"Tự động check-in ca làm" + đồng hồ ca làm trên topbar.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">7</span>
+          <div class="step-body"><strong>Bán hàng Tại quán</strong>
+            <p>Chọn món, tìm KH thành viên, áp KM giảm giá.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">8</span>
+          <div class="step-body"><strong>Bàn tự động</strong>
+            <p>Hệ thống gán bàn trống nhỏ nhất → "Tạo hóa đơn".</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">9</span>
+          <div class="step-body"><strong>Receipt</strong>
+            <p>Bàn vật lý → màu đỏ (<code>Đang phục vụ</code>).</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">10</span>
+          <div class="step-body"><strong>Thanh toán Tiền mặt</strong>
+            <p>Hóa đơn → xanh (<code>HoanThanh</code>), bàn giữ đỏ.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">11</span>
+          <div class="step-body"><strong>Trả bàn</strong>
+            <p>"Trả bàn" thủ công → bàn về xanh (<code>Trống</code>).</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">12</span>
+          <div class="step-body"><strong>Bán hàng VietQR</strong>
+            <p>Tạo đơn mới, chọn "QR".</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">13</span>
+          <div class="step-body"><strong>Countdown QR</strong>
+            <p>QR động + số tiền đúng + countdown 15 phút real-time.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">14</span>
+          <div class="step-body"><strong>Sửa món khi chờ QR</strong>
+            <p>"Sửa order" → hủy QR cũ → sửa giỏ hàng → sinh QR mới.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">15</span>
+          <div class="step-body"><strong>Xác nhận QR</strong>
+            <p>"Xác nhận chuyển khoản (Demo)" → thành công.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">16</span>
+          <div class="step-body"><strong>Hủy đơn</strong>
+            <p>Tạo đơn, "Hủy hóa đơn" + lý do → bàn tự trả trống.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">17</span>
+          <div class="step-body"><strong>Xem đối soát</strong>
+            <p>Danh sách hóa đơn → badge trạng thái chuẩn xác.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">18</span>
+          <div class="step-body"><strong>Audit Log</strong>
+            <p>Mọi hành động ghi lại chính xác kèm IP + User Agent.</p>
+          </div>
+        </div>
+        <div class="flow-step"><span class="step-num">19</span>
+          <div class="step-body"><strong>Đăng xuất</strong>
+            <p>Nhập mật khẩu → chốt ca → bảng chấm công chi tiết + tiền công thực tế.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 21 ===== -->
+    <section class="doc-section" id="sec-21">
+      <h2><span class="section-icon icon-arch">📌</span> 21. Kết luận</h2>
+      <p>Hệ thống <strong>WebQLCHCF</strong> là giải pháp quản trị quán cà phê hoàn chỉnh, vận hành dựa trên ASP.NET
+        Core MVC kết hợp stored procedure SQL Server.</p>
+      <p>Tài liệu kỹ thuật này phản ánh cấu trúc thư mục, tệp tin và logic nghiệp vụ thực tế của repository hiện tại.
+        Khi triển khai hoặc chấm điểm đồ án trên máy tính khác, cần tuân thủ đúng quy trình thiết lập tại Mục 0.</p>
+      <div class="callout callout-note">
+        <div class="callout-title">ℹ️ TECHNICAL ERROR REVIEW</div>
+        <div class="callout-body">
+          <p><em>Báo cáo phát hiện lỗi kỹ thuật:</em></p>
+          <p>Trong phạm vi đọc source và cập nhật, tài liệu chưa ghi nhận lỗi lớn cần sửa ngay. Hệ thống ở trạng thái
+            vận hành ổn định trong phạm vi kiểm thử đồ án. Lượt này chỉ chỉnh sửa file tài liệu
+            <code>README QLCHCF.md</code>/<code>.html</code> đúng quy định.</p>
+        </div>
+      </div>
+
+      <footer>Tài liệu HTML được chuyển đổi từ README QLCHCF.md</footer>
+    </section>
+
+  </main>
+
+  <!-- Back to Top -->
+  <button id="btt" title="Về đầu trang">▲</button>
+
+  <!-- Scripts -->
+  <script>
+    // Copy code
+    async function copyCode(btn) {
+      const code = btn.closest('.code-box').querySelector('code').innerText;
+      try {
+        await navigator.clipboard.writeText(code);
+        btn.innerText = 'Copied!';
+        btn.style.borderColor = 'var(--green)';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => { btn.innerText = 'Copy'; btn.style.borderColor = ''; btn.style.color = ''; }, 2000);
+      } catch (e) { console.error(e); }
+    }
+
+    // Toggle sidebar nav groups
+    function toggleNavGroup(btn) {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', !expanded);
+      const list = btn.nextElementSibling;
+      if (expanded) { list.classList.add('collapsed'); }
+      else { list.classList.remove('collapsed'); }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const headings = document.querySelectorAll('#main-content h2[id], #main-content h3[id]');
+      const navLinks = document.querySelectorAll('#sidebar-nav a');
+      const searchInput = document.getElementById('search-input');
+      const sidebar = document.getElementById('sidebar');
+      const mobToggle = document.getElementById('mob-toggle');
+      const btt = document.getElementById('btt');
+      const progressBar = document.getElementById('reading-progress');
+
+      // Reading progress
+      window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        progressBar.style.width = docHeight > 0 ? (scrollTop / docHeight * 100) + '%' : '0%';
+      });
+
+      // Scrollspy
+      function scrollspy() {
+        let currentId = '';
+        headings.forEach(h => { if (h.getBoundingClientRect().top < 120) currentId = h.id; });
+        navLinks.forEach(l => {
+          l.classList.remove('active');
+          if (l.getAttribute('href') === '#' + currentId) l.classList.add('active');
+        });
+      }
+      window.addEventListener('scroll', scrollspy);
+      scrollspy();
+
+      // Search
+      searchInput.addEventListener('input', function () {
+        const f = this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').trim();
+        document.querySelectorAll('.nav-group').forEach(g => {
+          let vis = 0;
+          g.querySelectorAll('li').forEach(li => {
+            const t = li.textContent.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd');
+            if (t.includes(f)) { li.style.display = ''; vis++; } else { li.style.display = 'none'; }
+          });
+          g.style.display = (vis > 0 || f === '') ? '' : 'none';
+        });
+      });
+
+      // Back to top
+      window.addEventListener('scroll', () => {
+        btt.classList.toggle('show', window.scrollY > 400);
+      });
+      btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+      // Mobile
+      mobToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('open');
+        mobToggle.textContent = sidebar.classList.contains('open') ? '✕' : '☰';
+      });
+      document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 992 && sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== mobToggle) {
+          sidebar.classList.remove('open'); mobToggle.textContent = '☰';
+        }
+      });
+      navLinks.forEach(a => a.addEventListener('click', () => {
+        if (window.innerWidth <= 992) { sidebar.classList.remove('open'); mobToggle.textContent = '☰'; }
+      }));
+    });
+  </script>
+
+</body>
+
+</html>

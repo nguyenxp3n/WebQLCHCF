@@ -1,0 +1,151 @@
+﻿@model IEnumerable<object>
+
+@{
+    ViewData["Title"] = "Quản lý Khách Hàng";
+    var cols = (string[])ViewData["Columns"]!;
+    var labels = ViewData["Labels"] as Dictionary<string, string> ?? new();
+    var keys = (string[])ViewData["KeyNames"]!;
+
+    string F(object? v, string n)
+    {
+        if (v == null)
+        {
+            return "";
+        }
+        if (v is DateTime d)
+        {
+            return d.ToString("dd/MM/yyyy");
+        }
+        if (v is decimal m && (n.Contains("Tien") || n.Contains("Gia") || n.Contains("Luong")))
+        {
+            return m.ToString("N0") + " đ";
+        }
+
+        return v.ToString() ?? "";
+    }
+
+    string GetBadgeClass(string value)
+    {
+        return value switch
+        {
+            "Đang bán" or "Sẵn sàng" => "badge-success-subtle",
+            "Tạm ngưng" or "Cảnh báo" => "badge-warning-subtle",
+            "Ngừng bán" => "badge-primary-subtle",
+            "Khóa" or "Hủy" or "Đã xóa" => "badge-danger-subtle",
+            _ => "badge-info-subtle"
+        };
+    }
+
+    IDictionary<string, string> R(object item)
+    {
+        var r = new Dictionary<string, string>();
+        if (keys.Length == 1)
+        {
+            r["id"] = Convert.ToString(item.GetType().GetProperty(keys[0])?.GetValue(item)) ?? "";
+        }
+        else
+        {
+            foreach (var k in keys)
+            {
+                r[char.ToLowerInvariant(k[0]) + k[1..]] = Convert.ToString(item.GetType().GetProperty(k)?.GetValue(item)) ?? "";
+            }
+        }
+
+        return r;
+    }
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>@ViewData["Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Khách hàng</li>
+            </ol>
+        </nav>
+    </div>
+    <a asp-action="Create" class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 hover-lift">
+        <i class="bi bi-person-plus-fill"></i>
+        <span>Thêm khách hàng mới</span>
+    </a>
+</div>
+
+<!-- PREMIUM TABLE CARD -->
+<div class="card app-card">
+    <div class="app-card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-people-fill me-2"></i> Danh sách khách hàng</h5>
+        <span class="badge badge-primary-subtle py-2 px-3">Tổng số: @Model.Count() thành viên</span>
+    </div>
+    <div class="app-card-body p-0">
+        <div class="table-responsive border-0 rounded-0">
+            <table class="table app-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        @foreach (var c in cols)
+                        {
+                            <th>@(labels.ContainsKey(c) ? labels[c] : c)</th>
+                        }
+                        <th class="text-end" style="width: 220px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="@(cols.Length + 1)" class="text-center py-5 text-muted">
+                                <i class="bi bi-folder-x fs-1 d-block mb-2"></i>
+                                Không tìm thấy khách hàng nào trong hệ thống!
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                @foreach (var c in cols)
+                                {
+                                    var value = F(item.GetType().GetProperty(c)?.GetValue(item), c);
+                                    <td>
+                                        @if (c == "TrangThai" || c == "TinhTrang")
+                                        {
+                                            <span class="badge @GetBadgeClass(value)">@value</span>
+                                        }
+                                        else if (c == "MaKH")
+                                        {
+                                            <code class="fw-bold">@value</code>
+                                        }
+                                        else if (c == "DiemTichLuy")
+                                        {
+                                            <span class="fw-bold text-success"><i class="bi bi-gem me-1"></i>@value pts</span>
+                                        }
+                                        else
+                                        {
+                                            @value
+                                        }
+                                    </td>
+                                }
+                                <td class="text-end text-nowrap">
+                                    <div class="d-inline-flex gap-1.5">
+                                        <a asp-action="Details" asp-all-route-data="R(item)" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1" title="Chi tiết">
+                                            <i class="bi bi-eye-fill"></i> <span class="d-none d-xl-inline">Chi tiết</span>
+                                        </a>
+                                        <a asp-action="Edit" asp-all-route-data="R(item)" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1" title="Sửa">
+                                            <i class="bi bi-pencil-square"></i> <span class="d-none d-xl-inline">Sửa</span>
+                                        </a>
+                                        <a asp-action="Delete" asp-all-route-data="R(item)" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1" title="Xóa">
+                                            <i class="bi bi-trash-fill"></i> <span class="d-none d-xl-inline">Xóa</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

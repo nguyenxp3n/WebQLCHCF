@@ -1,0 +1,83 @@
+@model object
+
+@{
+    ViewData["Title"] = "Xác nhận xóa dữ liệu";
+    var cols = (string[])ViewData["Columns"]!;
+    var labels = ViewData["Labels"] as Dictionary<string, string> ?? new();
+
+    string F(object? v, string n)
+    {
+        if (v == null)
+        {
+            return "";
+        }
+        if (v is DateTime d)
+        {
+            return d.ToString("dd/MM/yyyy");
+        }
+        if (v is decimal m && (n.Contains("Tien") || n.Contains("Gia") || n.Contains("Luong")))
+        {
+            return m.ToString("N0") + " đ";
+        }
+
+        return v.ToString() ?? "";
+    }
+
+    var returnUrl = ViewBag.ReturnUrl as string;
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>@ViewData["Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Danh sách</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Xóa dữ liệu</li>
+            </ol>
+        </nav>
+    </div>
+    <a href="@(returnUrl ?? Url.Action("Index"))" class="btn btn-outline-secondary rounded-pill px-4">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card app-card form-card border-danger">
+    <div class="app-card-header bg-danger text-white">
+        <h5 class="mb-0 fw-bold text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i> Cảnh báo hành động nguy hiểm</h5>
+    </div>
+    <div class="app-card-body p-4">
+        <div class="alert alert-danger border-0 rounded-3 mb-4 d-flex align-items-center gap-2.5 shadow-sm">
+            <i class="bi bi-shield-fill-x fs-4 text-danger"></i>
+            <div>
+                <strong>Chú ý:</strong> Bạn có chắc chắn muốn xóa bản ghi này khỏi cơ sở dữ liệu? Hành động này có thể không thể hoàn tác!
+            </div>
+        </div>
+
+        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-hdd-network-fill"></i> Dữ liệu chuẩn bị xóa:</h6>
+        <div class="row g-2 mb-4 bg-light rounded-3 p-3 border">
+            @foreach (var c in cols)
+            {
+                <div class="col-12 border-bottom border-dashed pb-2 mb-2 last-border-none">
+                    <div class="row">
+                        <div class="col-sm-4 text-muted small fw-bold">@(labels.ContainsKey(c) ? labels[c] : c):</div>
+                        <div class="col-sm-8 fw-semibold text-danger">@F(Model.GetType().GetProperty(c)?.GetValue(Model), c)</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- FORM ACTION -->
+        <form method="post" onsubmit="return confirm('Bạn thực sự chắc chắn muốn XÓA VĨNH VIỄN dữ liệu này?');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger rounded-pill px-5 hover-lift" type="submit">
+                    <i class="bi bi-trash-fill me-1"></i> Xác nhận Xóa vĩnh viễn
+                </button>
+                <a href="@(returnUrl ?? Url.Action("Index"))" class="btn btn-outline-secondary rounded-pill px-4">Hủy bỏ & Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>

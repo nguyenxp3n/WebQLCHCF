@@ -1,0 +1,87 @@
+@model List<WebQLCHCF.ViewModels.CongThucIndexItemViewModel>
+
+@{
+    ViewData["Title"] = "Quản lý Công Thức Pha Chế";
+}
+
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>@ViewData["Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Công thức pha chế</li>
+            </ol>
+        </nav>
+    </div>
+    <a asp-action="Create" class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 hover-lift">
+        <i class="bi bi-plus-lg"></i>
+        <span>Thêm công thức mới</span>
+    </a>
+</div>
+
+<div class="card app-card">
+    <div class="app-card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-journal-text me-2"></i> Định lượng công thức pha chế</h5>
+        <span class="badge badge-primary-subtle py-2 px-3">Tổng số: @Model.Count sản phẩm</span>
+    </div>
+    <div class="app-card-body p-0">
+        <div class="table-responsive border-0 rounded-0">
+            <table class="table app-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 110px;">Mã SP</th>
+                        <th style="width: 220px;">Tên sản phẩm</th>
+                        <th>Nguyên liệu và định lượng</th>
+                        <th class="text-end" style="width: 180px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="bi bi-folder-x fs-1 d-block mb-2"></i>
+                                Chưa định nghĩa công thức pha chế nào.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><code class="fw-bold">@item.MaSP</code></td>
+                                <td class="fw-semibold">@item.TenSP</td>
+                                <td>
+                                    <div class="recipe-summary">
+                                        @foreach (var ingredient in item.NguyenLieus)
+                                        {
+                                            <span class="recipe-summary-item">
+                                                @ingredient.TenNL
+                                                <strong>@ingredient.DinhLuong.ToString("0.###") @ingredient.DonViTinh</strong>
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <div class="d-inline-flex gap-1.5">
+                                        <a asp-action="Details" asp-route-maSP="@item.MaSP" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1" title="Chi tiết">
+                                            <i class="bi bi-eye-fill"></i> <span class="d-none d-xl-inline">Chi tiết</span>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-maSP="@item.MaSP" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1" title="Sửa">
+                                            <i class="bi bi-pencil-square"></i> <span class="d-none d-xl-inline">Sửa</span>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-maSP="@item.MaSP" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1" title="Xóa">
+                                            <i class="bi bi-trash3"></i> <span class="d-none d-xl-inline">Xóa</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

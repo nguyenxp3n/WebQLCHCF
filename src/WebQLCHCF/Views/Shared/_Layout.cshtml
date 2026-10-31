@@ -1,0 +1,278 @@
+@using WebQLCHCF.Security
+@inject WebQLCHCF.Services.IChamCongService ChamCongService
+@{
+    var currentMaNV = Context.Session.GetString("MaNV");
+    var currentVaiTro = Context.Session.GetString("VaiTro") ?? string.Empty;
+    var isLoggedIn = !string.IsNullOrWhiteSpace(Context.Session.GetString("MaTK"));
+    var isQuanLy = string.Equals(currentVaiTro, AppRoles.QuanLy, StringComparison.OrdinalIgnoreCase);
+    var isPhaChe = string.Equals(currentVaiTro, AppRoles.PhaChe, StringComparison.OrdinalIgnoreCase);
+    var isPhucVu = string.Equals(currentVaiTro, AppRoles.PhucVu, StringComparison.OrdinalIgnoreCase);
+    var canUseIngredient = isQuanLy || isPhaChe;
+    var currentDangLam = !string.IsNullOrWhiteSpace(currentMaNV)
+        ? await ChamCongService.GetDangLamByNhanVienAsync(currentMaNV)
+        : null;
+        
+    var controllerName = ViewContext.RouteData.Values["controller"]?.ToString();
+    var actionName = ViewContext.RouteData.Values["action"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+        (function () {
+            try {
+                document.documentElement.classList.add("app-preload");
+                if (localStorage.getItem("qlchcf.sidebar.collapsed") === "true") {
+                    document.documentElement.classList.add("sidebar-collapsed");
+                }
+            } catch {
+                document.documentElement.classList.add("app-preload");
+            }
+        })();
+    </script>
+    <title>@ViewData["Title"] - WebQLCHCF Premium Cafe</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons CDN for rich indicators -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts for modern premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="pjax-progress" aria-hidden="true"></div>
+    <div id="app-wrapper">
+        <!-- SIDEBAR DEEP ESPRESSO -->
+        <aside id="app-sidebar">
+            <div class="sidebar-brand">
+                <a asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-cup-hot-fill text-warning"></i>
+                    <span>QLCHCF Premium</span>
+                </a>
+                <button id="sidebarToggle" class="sidebar-collapse-toggle" type="button" aria-label="Thu gọn sidebar" aria-pressed="false" title="Thu gọn / mở rộng sidebar">
+                    <i class="bi bi-layout-sidebar-inset"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                @if (isLoggedIn)
+                {
+                    @if (isQuanLy)
+                    {
+                        <div class="menu-category">Tổng quan</div>
+                        <a class="sidebar-nav-link @(controllerName == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-grid-1x2-fill"></i>
+                            <span>Tổng Quan Dashboard</span>
+                        </a>
+                    }
+
+                    <div class="menu-category">Bán hàng</div>
+                    <a class="sidebar-nav-link @(controllerName == "Order" ? "active" : "")" asp-controller="Order" asp-action="Create">
+                        <i class="bi bi-cup-hot"></i>
+                        <span>Order Tại Quầy</span>
+                    </a>
+                    <a class="sidebar-nav-link @(controllerName == "HoaDon" ? "active" : "")" asp-controller="HoaDon" asp-action="Index">
+                        <i class="bi bi-receipt-cutoff"></i>
+                        <span>Hóa Đơn & Chi Tiết</span>
+                    </a>
+                    <a class="sidebar-nav-link @(controllerName == "KhachHang" ? "active" : "")" asp-controller="KhachHang" asp-action="Index">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Khách Hàng</span>
+                    </a>
+
+                    <div class="menu-category">Quản lý quán</div>
+                    <a class="sidebar-nav-link @(controllerName == "Ban" ? "active" : "")" asp-controller="Ban" asp-action="Index">
+                        <i class="bi bi-table"></i>
+                        <span>Quản Lý Bàn</span>
+                    </a>
+                    @if (isQuanLy)
+                    {
+                        <a class="sidebar-nav-link @(controllerName == "SanPham" ? "active" : "")" asp-controller="SanPham" asp-action="Index">
+                            <i class="bi bi-box-seam-fill"></i>
+                            <span>Sản Phẩm</span>
+                        </a>
+                        <a class="sidebar-nav-link @(controllerName == "LoaiSP" ? "active" : "")" asp-controller="LoaiSP" asp-action="Index">
+                            <i class="bi bi-tags-fill"></i>
+                            <span>Loại Sản Phẩm</span>
+                        </a>
+                        <a class="sidebar-nav-link @(controllerName == "KhuyenMai" ? "active" : "")" asp-controller="KhuyenMai" asp-action="Index">
+                            <i class="bi bi-percent"></i>
+                            <span>Khuyến Mãi</span>
+                        </a>
+                    }
+
+                    @if (canUseIngredient)
+                    {
+                        <div class="menu-category">Kho & Pha chế</div>
+                        <a class="sidebar-nav-link @(controllerName == "NguyenLieu" ? "active" : "")" asp-controller="NguyenLieu" asp-action="Index">
+                            <i class="bi bi-egg-fried"></i>
+                            <span>Nguyên Liệu</span>
+                        </a>
+                        @if (isQuanLy)
+                        {
+                            <a class="sidebar-nav-link @(controllerName == "CongThuc" ? "active" : "")" asp-controller="CongThuc" asp-action="Index">
+                                <i class="bi bi-journal-text"></i>
+                                <span>Công Thức Pha Chế</span>
+                            </a>
+                            <a class="sidebar-nav-link @(controllerName == "PhieuNhap" ? "active" : "")" asp-controller="PhieuNhap" asp-action="Index">
+                                <i class="bi bi-cart-plus-fill"></i>
+                                <span>Phiếu Nhập Kho</span>
+                            </a>
+                        }
+                    }
+
+                    @if (isQuanLy)
+                    {
+                        <div class="menu-category">Nhân sự</div>
+                        <a class="sidebar-nav-link @(controllerName == "NhanVien" ? "active" : "")" asp-controller="NhanVien" asp-action="Index">
+                            <i class="bi bi-person-badge-fill"></i>
+                            <span>Nhân Viên</span>
+                        </a>
+                        <a class="sidebar-nav-link @(controllerName == "TaiKhoan" ? "active" : "")" asp-controller="TaiKhoan" asp-action="Index">
+                            <i class="bi bi-shield-lock-fill"></i>
+                            <span>Tài Khoản</span>
+                        </a>
+                        <a class="sidebar-nav-link @(controllerName == "Luong" && actionName == "Thang" ? "active" : "")" asp-controller="Luong" asp-action="Thang">
+                            <i class="bi bi-calendar-check"></i>
+                            <span>Lương Tháng</span>
+                        </a>
+                        <a class="sidebar-nav-link @(controllerName == "Luong" && actionName == "Index" ? "active" : "")" asp-controller="Luong" asp-action="Index">
+                            <i class="bi bi-cash-stack"></i>
+                            <span>Bảng Tính Lương</span>
+                        </a>
+
+                        <div class="menu-category">Báo cáo</div>
+                        <a class="sidebar-nav-link @(controllerName == "ThongKe" ? "active" : "")" asp-controller="ThongKe" asp-action="DoanhThuTheoNgay">
+                            <i class="bi bi-bar-chart-line-fill"></i>
+                            <span>Thống Kê Báo Cáo</span>
+                        </a>
+                        <a class="sidebar-nav-link @(controllerName == "AuditLog" ? "active" : "")" asp-controller="AuditLog" asp-action="Index">
+                            <i class="bi bi-clock-history"></i>
+                            <span>Lịch sử thao tác</span>
+                        </a>
+                    }
+
+                    <div class="menu-category">Cá nhân</div>
+                    <a class="sidebar-nav-link @(controllerName == "Account" && actionName == "ChangePassword" ? "active" : "")" asp-controller="Account" asp-action="ChangePassword">
+                        <i class="bi bi-key-fill"></i>
+                        <span>Đổi mật khẩu</span>
+                    </a>
+                }
+                else
+                {
+                    <div class="menu-category">Cá nhân</div>
+                    <a class="sidebar-nav-link @(controllerName == "Account" ? "active" : "")" asp-controller="Account" asp-action="Login">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>Đăng nhập</span>
+                    </a>
+                }
+            </div>
+        </aside>
+
+        <!-- APP CONTENT AREA -->
+        <div id="app-main-shell">
+            <!-- TOPBAR LATTE -->
+            <header id="app-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="topbar-toggle" id="sidebarMobileToggle" type="button" aria-label="Mở menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0 fw-bold d-none d-md-block text-primary">WebQLCHCF</h5>
+                </div>
+                
+                <div class="d-flex align-items-center gap-3">
+                    @if (Context.Session.GetString("MaTK") != null)
+                    {
+                        <!-- Active Shift Status Badge -->
+                        @if (currentDangLam != null)
+                        {
+                            <span class="badge badge-success-subtle d-flex align-items-center gap-1 py-2 px-3">
+                                <span class="spinner-grow spinner-grow-sm text-success" role="status" style="width: 8px; height: 8px;"></span>
+                                <span class="d-none d-sm-inline fw-semibold">Đang ca:</span> @currentDangLam.ThoiGianDaLamText
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-danger-subtle d-flex align-items-center gap-1 py-2 px-3">
+                                <i class="bi bi-exclamation-circle-fill"></i>
+                                <span class="d-none d-sm-inline fw-semibold">Chưa vào ca làm</span>
+                            </span>
+                        }
+
+                        <!-- Staff Dropdown Info -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary border-0 rounded-pill d-flex align-items-center gap-2 py-1 px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="bg-secondary-subtle rounded-circle d-flex align-items-center justify-content-center text-primary fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                    @Context.Session.GetString("TenNV")?.Substring(0, Math.Min(2, Context.Session.GetString("TenNV")?.Length ?? 0)).ToUpper()
+                                </div>
+                                <span class="fw-semibold text-truncate d-none d-sm-inline" style="max-width: 120px;">
+                                    @Context.Session.GetString("TenNV")
+                                </span>
+                                <i class="bi bi-chevron-down small text-muted"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-4 mt-2">
+                                <li class="px-3 py-2 border-bottom mb-1">
+                                    <div class="fw-bold text-primary">@Context.Session.GetString("TenNV")</div>
+                                    <small class="text-muted">Mã NV: @Context.Session.GetString("MaNV")</small>
+                                    <br />
+                                    <small class="text-muted">Vai trò: @currentVaiTro</small>
+                                </li>
+                                <li>
+                                    <a asp-controller="Account" asp-action="ChangePassword" class="dropdown-item d-flex align-items-center gap-2">
+                                        <i class="bi bi-key-fill"></i>
+                                        <span>Đổi mật khẩu</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a asp-controller="Account" asp-action="Logout" class="dropdown-item text-danger d-flex align-items-center gap-2" data-no-pjax="true">
+                                        <i class="bi bi-box-arrow-right"></i>
+                                        <span>Đăng xuất (Checkout)</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-sm rounded-pill px-4">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
+                        </a>
+                    }
+                </div>
+            </header>
+
+            <!-- MAIN CONTAINER -->
+            <main id="app-content" class="app-container" data-pjax-container>
+                <!-- System Success/Error Alert messages -->
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible show shadow-sm border-0 d-flex align-items-center gap-2 mb-4 rounded-4" role="alert">
+                        <i class="bi bi-check-circle-fill fs-5"></i>
+                        <div>@Html.Raw(TempData["Success"])</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible show shadow-sm border-0 d-flex align-items-center gap-2 mb-4 rounded-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div>@Html.Raw(TempData["Error"])</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/congthuc-editor.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

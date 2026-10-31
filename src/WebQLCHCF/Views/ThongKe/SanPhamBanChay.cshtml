@@ -1,0 +1,103 @@
+@model List<SanPhamBanChayViewModel>
+
+@{
+    ViewData["Title"] = "Top sản phẩm bán chạy";
+    string Money(decimal value) => value.ToString("N0") + " đ";
+    var index = 1;
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>@ViewData["Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Sản phẩm bán chạy</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="DoanhThuTheoNgay" class="btn btn-outline-primary rounded-pill px-4">
+            <i class="bi bi-cash-coin me-1"></i> Doanh thu ngày
+        </a>
+        <a asp-action="NhapHangTheoThang" class="btn btn-outline-primary rounded-pill px-4">
+            <i class="bi bi-cart-check me-1"></i> Nhập hàng tháng
+        </a>
+    </div>
+</div>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger border-0 rounded-3 mb-4 small">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @ViewBag.ErrorMessage
+    </div>
+}
+
+<!-- TABLE CARD -->
+<div class="card app-card">
+    <div class="app-card-header bg-light">
+        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-trophy-fill me-2"></i> Bảng xếp hạng sản phẩm bán chạy nhất</h5>
+    </div>
+    <div class="app-card-body p-0">
+        <div class="table-responsive">
+            <table class="table app-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 100px;">Hạng</th>
+                        <th style="width: 120px;">Mã SP</th>
+                        <th>Tên sản phẩm</th>
+                        <th class="text-center" style="width: 150px;">Số lượng bán</th>
+                        <th class="text-end" style="width: 200px;">Tổng doanh số</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-award fs-1 d-block mb-2 text-secondary"></i>
+                                Chưa có dữ liệu doanh số sản phẩm nào được ghi nhận!
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-center">
+                                    @if (index == 1)
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold fs-7 shadow-sm"><i class="bi bi-trophy-fill text-danger me-1"></i>#1 Vàng</span>
+                                    }
+                                    else if (index == 2)
+                                    {
+                                        <span class="badge bg-secondary text-white rounded-pill px-3 py-2 fw-bold fs-7 shadow-sm"><i class="bi bi-trophy-fill me-1"></i>#2 Bạc</span>
+                                    }
+                                    else if (index == 3)
+                                    {
+                                        <span class="badge bg-danger text-white rounded-pill px-3 py-2 fw-bold fs-7 shadow-sm"><i class="bi bi-trophy-fill me-1"></i>#3 Đồng</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="fw-bold text-muted fs-6">#@index</span>
+                                    }
+                                </td>
+                                <td><code>@item.MaSP</code></td>
+                                <td class="fw-semibold text-primary fs-6">@item.TenSP</td>
+                                <td class="text-center fw-bold text-dark fs-6">
+                                    @item.TongSoLuong <span class="small text-muted fw-normal">món</span>
+                                </td>
+                                <td class="text-end fw-bold text-success fs-6">
+                                    @Money(item.TongTien)
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

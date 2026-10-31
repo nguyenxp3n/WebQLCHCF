@@ -1,0 +1,63 @@
+@model WebQLCHCF.ViewModels.CongThucIndexItemViewModel
+
+@{
+    ViewData["Title"] = "Xác nhận xóa Công Thức Pha Chế";
+}
+
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>@ViewData["Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Công thức pha chế</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Xóa công thức</li>
+            </ol>
+        </nav>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card app-card form-card border-danger">
+    <div class="app-card-header bg-danger text-white">
+        <h5 class="mb-0 fw-bold text-white">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> Xóa toàn bộ công thức của sản phẩm
+        </h5>
+    </div>
+    <div class="app-card-body p-4">
+        <div class="alert alert-danger border-0 rounded-3 mb-4">
+            Chỉ dữ liệu công thức sẽ bị xóa. Sản phẩm và nguyên liệu vẫn được giữ nguyên.
+        </div>
+
+        <dl class="row mb-4">
+            <dt class="col-sm-3">Mã sản phẩm</dt>
+            <dd class="col-sm-9"><code class="fw-bold">@Model.MaSP</code></dd>
+            <dt class="col-sm-3">Tên sản phẩm</dt>
+            <dd class="col-sm-9 fw-semibold">@Model.TenSP</dd>
+        </dl>
+
+        <h6 class="fw-bold text-primary mb-3">Nguyên liệu sẽ bị xóa khỏi công thức</h6>
+        <div class="recipe-summary mb-4">
+            @foreach (var ingredient in Model.NguyenLieus)
+            {
+                <span class="recipe-summary-item">
+                    @ingredient.TenNL
+                    <strong>@ingredient.DinhLuong.ToString("0.###") @ingredient.DonViTinh</strong>
+                </span>
+            }
+        </div>
+
+        <form asp-action="Delete" asp-route-maSP="@Model.MaSP" method="post" data-no-pjax="true"
+              onsubmit="return confirm('Bạn có chắc chắn muốn xóa toàn bộ công thức của sản phẩm này?');">
+            @Html.AntiForgeryToken()
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger rounded-pill px-5 hover-lift" type="submit">
+                    <i class="bi bi-trash-fill me-1"></i> Xác nhận xóa công thức
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Hủy bỏ</a>
+            </div>
+        </form>
+    </div>
+</div>

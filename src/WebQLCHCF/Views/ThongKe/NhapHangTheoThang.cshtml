@@ -1,0 +1,119 @@
+@model List<NhapHangTheoThangViewModel>
+
+@{
+    ViewData["Title"] = "Nhập hàng theo tháng";
+    string Money(decimal value) => value.ToString("N0") + " đ";
+    decimal tongChiPhiNhap = Model.Sum(x => x.TongTienNhap);
+    int tongSoBanGhi = Model.Count;
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>@ViewData["Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Tổng quan</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Nhập hàng theo tháng</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger border-0 rounded-3 mb-4 small">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @ViewBag.ErrorMessage
+    </div>
+}
+
+<!-- FILTER FORM CARD -->
+<div class="card app-card mb-4">
+    <div class="app-card-body p-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar2-range me-1 text-primary"></i> Tháng (1 - 12)</label>
+                <input type="number" min="1" max="12" name="thang" value="@ViewData["Thang"]" class="form-control rounded-pill" placeholder="Nhập tháng..." />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar4-event me-1 text-primary"></i> Năm (>= 2000)</label>
+                <input type="number" min="2000" name="nam" value="@ViewData["Nam"]" class="form-control rounded-pill" placeholder="Nhập năm..." />
+            </div>
+            <div class="col-12 col-md-4">
+                <button class="btn btn-primary rounded-pill px-4 w-100 hover-lift" type="submit">
+                    <i class="bi bi-filter me-1"></i> Xem báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- METRICS -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6">
+        <div class="card metric-card info h-100">
+            <div class="card-body">
+                <div class="metric-icon"><i class="bi bi-cart-check"></i></div>
+                <div class="metric-label">Tổng chi phí nhập hàng kỳ này</div>
+                <div class="metric-value text-danger fs-3">@Money(tongChiPhiNhap)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6">
+        <div class="card metric-card primary h-100">
+            <div class="card-body">
+                <div class="metric-icon"><i class="bi bi-bar-chart-steps"></i></div>
+                <div class="metric-label">Số chu kỳ ghi nhận chi phí</div>
+                <div class="metric-value">@tongSoBanGhi <span class="fs-6 text-muted">tháng</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABLE CARD -->
+<div class="card app-card">
+    <div class="app-card-header bg-light">
+        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-list-columns-reverse me-2"></i> Nhật ký chi phí nhập hàng theo tháng</h5>
+    </div>
+    <div class="app-card-body p-0">
+        <div class="table-responsive">
+            <table class="table app-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 150px;">Tháng</th>
+                        <th class="text-center" style="width: 150px;">Năm</th>
+                        <th class="text-end">Tổng tiền nhập hàng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center py-5 text-muted">
+                                <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
+                                Không có dữ liệu nhập hàng trong thời gian đã chọn!
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-center fw-bold text-primary">
+                                    Tháng @item.Thang
+                                </td>
+                                <td class="text-center fw-semibold text-secondary">
+                                    Năm @item.Nam
+                                </td>
+                                <td class="text-end fw-bold text-danger fs-6">
+                                    @Money(item.TongTienNhap)
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

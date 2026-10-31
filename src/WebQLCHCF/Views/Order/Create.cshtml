@@ -1,0 +1,357 @@
+@using System.Globalization
+@model OrderCreateViewModel
+
+@{
+    ViewData["Title"] = "Order tại quầy";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var canOrder = ViewBag.CanOrder as bool? ?? true;
+    var categories = Model.DanhSachSanPhamDangBan
+        .Select(x => new { x.MaLoaiSP, x.TenLoaiSP })
+        .DistinctBy(x => x.MaLoaiSP)
+        .OrderBy(x => x.TenLoaiSP)
+        .ToList();
+    var promotionsJson = System.Text.Json.JsonSerializer.Serialize(Model.DanhSachKhuyenMai);
+    var areaTablesJson = System.Text.Json.JsonSerializer.Serialize(Model.BanTrongDauTienTheoKhuVuc);
+    var initialCustomerJson = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        maKH = Model.MaKH,
+        tenKH = Model.TenKH,
+        sdt = Model.SDTKhachHang
+    });
+
+    string Money(decimal value) => value.ToString("N0", culture) + " đ";
+}
+
+<div data-page="order-create">
+<div class="page-header">
+    <div class="page-title-group">
+        <h2>@(Model.IsEditing ? $"Sửa Order {Model.EditMaHD}" : "Order Tại Quầy")</h2>
+        <div class="text-muted">
+            @(Model.IsEditing
+                ? "Chỉnh món hoặc đổi phương thức thanh toán cho hóa đơn hiện tại"
+                : "Thao tác nhanh, chọn nhiều món và tạo hóa đơn tại quầy")
+        </div>
+    </div>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+@if (!canOrder)
+{
+    <div class="alert alert-warning shadow-sm border-0 rounded-4 d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+        <div>
+            <strong>Lưu ý:</strong> Bạn cần đăng nhập và check-in vào ca làm việc để có thể bắt đầu order món.
+        </div>
+    </div>
+}
+
+<form asp-action="Create" method="post" class="needs-validation order-form" novalidate data-no-pjax="true">
+    @Html.AntiForgeryToken()
+    <input asp-for="EditMaHD" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 small"></div>
+
+    <div class="order-workspace">
+        <div class="order-main">
+            <div class="card app-card order-panel order-setup-card">
+                <div class="app-card-header">
+                    <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-sliders me-2"></i> Thiết lập đơn hàng</h5>
+                </div>
+                <div class="app-card-body">
+                    <input asp-for="MaKH" type="hidden" id="order-customer-id" />
+                    <div class="order-setup-grid">
+                        <div class="order-setup-field order-service-field">
+                            <label class="form-label fw-bold text-primary mb-2">Phục vụ</label>
+                            <div class="d-flex gap-2 order-service-toggle">
+                                <input type="radio" class="btn-check" asp-for="HinhThuc" id="hinhThucTaiQuan" value="TaiQuan" />
+                                <label class="btn btn-outline-primary py-2 rounded-3 d-flex align-items-center justify-content-center gap-2" for="hinhThucTaiQuan">
+                                    <i class="bi bi-shop"></i> Tại quán
+                                </label>
+
+                                <input type="radio" class="btn-check" asp-for="HinhThuc" id="hinhThucMangVe" value="MangVe" />
+                                <label class="btn btn-outline-primary py-2 rounded-3 d-flex align-items-center justify-content-center gap-2" for="hinhThucMangVe">
+                                    <i class="bi bi-bag-dash"></i> Mang về
+                                </label>
+                            </div>
+
+                            @if (Model.IsEditing)
+                            {
+                                <input asp-for="KhuVuc" type="hidden" />
+                            }
+                            else
+                            {
+                                <div class="mt-3" id="order-area-selector">
+                                    <label class="form-label fw-bold text-primary mb-2">Khu vực</label>
+                                    <div class="d-flex gap-2 order-area-toggle">
+                                        <input type="radio" class="btn-check" asp-for="KhuVuc" id="khuVucTangTret" value="Tầng trệt" />
+                                        <label class="btn btn-outline-secondary py-2 rounded-3" for="khuVucTangTret">Tầng trệt</label>
+
+                                        <input type="radio" class="btn-check" asp-for="KhuVuc" id="khuVucTangLung" value="Tầng lửng" />
+                                        <label class="btn btn-outline-secondary py-2 rounded-3" for="khuVucTangLung">Tầng lửng</label>
+                                    </div>
+                                    <div class="small text-danger mt-2 @(string.IsNullOrWhiteSpace(Model.ThongBaoBan) ? "d-none" : "")" id="order-area-warning">@Model.ThongBaoBan</div>
+                                </div>
+                            }
+
+                            <div class="order-table-status mt-3">
+                                <i class="bi bi-info-circle-fill text-success"></i>
+                                <div class="order-table-status-content">
+                                    <strong id="tableModeLabel">@(Model.IsEditing ? "Đang sửa order" : "Tự chọn bàn trống")</strong>
+                                    <span id="serviceModeHint">
+                                        @(Model.IsEditing
+                                            ? "Bàn hiện tại được giữ nguyên khi sửa order."
+                                            : "Hệ thống sẽ tự chọn một bàn trống khi tạo hóa đơn.")
+                                    </span>
+                                    <div class="table-next-label mt-2" id="table-next-label">
+                                        @if (Model.IsEditing && Model.BanTrongTiepTheo != null)
+                                        {
+                                            <span>Bàn đang giữ: <strong>@Model.BanTrongTiepTheo.TenBan</strong> (@Model.BanTrongTiepTheo.MaBan)</span>
+                                        }
+                                        else if (Model.BanTrongTiepTheo != null)
+                                        {
+                                            <span>Bàn trống tiếp theo: <strong>@Model.BanTrongTiepTheo.TenBan</strong> (@Model.BanTrongTiepTheo.MaBan)</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Hiện không còn bàn trống.</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-setup-field order-customer-field">
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                <label class="form-label fw-bold text-primary mb-0">SĐT tích điểm</label>
+                            <span class="badge badge-primary-subtle" id="selectedCustomerBadge">@(string.IsNullOrWhiteSpace(Model.TenKH) ? "Không tích điểm" : Model.TenKH)</span>
+                            </div>
+                            <div class="customer-search-wrap">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-telephone-fill"></i></span>
+                                    <input type="search" class="form-control" id="customer-phone-search" placeholder="Nhập 3 số để tìm khách..." autocomplete="off" inputmode="numeric" value="@Model.SDTKhachHang" />
+                                    <button type="button" class="btn btn-outline-secondary" id="clear-customer-btn" title="Không tích điểm">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary d-none" id="quick-customer-inline-btn" data-bs-toggle="modal" data-bs-target="#quickCustomerModal">
+                                        <i class="bi bi-person-plus-fill"></i>
+                                        <span class="d-none d-xl-inline ms-1">Thêm</span>
+                                    </button>
+                                </div>
+                                <div class="customer-suggestions shadow-sm" id="customer-suggestions" hidden></div>
+                            </div>
+                            <div class="small mt-2 text-muted" id="customer-search-status">Không tích điểm</div>
+                            <button type="button" class="btn btn-link btn-sm px-0 mt-1 text-decoration-none" id="quick-customer-soft-btn" data-bs-toggle="modal" data-bs-target="#quickCustomerModal">
+                                <i class="bi bi-person-plus"></i> Tạo khách mới
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card app-card order-panel order-products-card">
+                <div class="app-card-header flex-wrap gap-3">
+                    <div>
+                        <h5 class="mb-1 fw-bold text-primary"><i class="bi bi-cup-straw me-2"></i> Danh sách sản phẩm</h5>
+                        <div class="small text-muted">Tìm món, lọc danh mục và tăng giảm số lượng ngay trong danh sách.</div>
+                    </div>
+                    <div class="order-product-tools">
+                        <input type="search" class="form-control form-control-sm" id="product-search" placeholder="Tìm mã hoặc tên món..." />
+                        <select class="form-select form-select-sm" id="category-filter">
+                            <option value="">Tất cả danh mục</option>
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category.MaLoaiSP">@category.TenLoaiSP</option>
+                            }
+                        </select>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="selected-only-filter" />
+                            <label class="form-check-label small fw-semibold" for="selected-only-filter">Chỉ món đã chọn</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="app-card-body p-0">
+                    <div class="order-products-scroll">
+                        <table class="table app-table align-middle mb-0" id="order-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 90px;">Mã SP</th>
+                                    <th>Tên đồ uống / món ăn</th>
+                                    <th style="width: 150px;">Danh mục</th>
+                                    <th style="width: 130px;">Đơn giá</th>
+                                    <th style="width: 170px;" class="text-center">Số lượng</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-product-body">
+                                @if (!Model.Items.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            <i class="bi bi-clipboard-x fs-1 d-block mb-2"></i>
+                                            Không tìm thấy sản phẩm nào trong cơ sở dữ liệu.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @for (var i = 0; i < Model.Items.Count; i++)
+                                    {
+                                        var product = Model.DanhSachSanPhamDangBan.FirstOrDefault(x => x.MaSP == Model.Items[i].MaSP);
+                                        var price = product?.DonGia ?? Model.Items[i].DonGia;
+                                        var categoryName = product?.TenLoaiSP ?? "Khác";
+                                        var categoryId = product?.MaLoaiSP ?? "";
+                                        var productName = product?.TenSP ?? Model.Items[i].TenSP;
+
+                                        <tr class="order-product-row"
+                                            data-index="@i"
+                                            data-code="@Model.Items[i].MaSP"
+                                            data-name="@productName"
+                                            data-category="@categoryId"
+                                            data-category-name="@categoryName"
+                                            data-price="@price.ToString(CultureInfo.InvariantCulture)">
+                                            <td>
+                                                <code>@Model.Items[i].MaSP</code>
+                                                <input type="hidden" asp-for="Items[i].MaSP" />
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold text-primary">@productName</div>
+                                                <input type="hidden" asp-for="Items[i].TenSP" />
+                                                <input type="hidden" asp-for="Items[i].DonGia" />
+                                                <select asp-for="Items[i].MaKM" class="order-promo-source d-none">
+                                                    <option value="">Không áp dụng</option>
+                                                    @foreach (var km in Model.DanhSachKhuyenMai)
+                                                    {
+                                                        <option value="@km.MaKM">@km.TenKM</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td><span class="badge badge-primary-subtle">@categoryName</span></td>
+                                            <td class="fw-bold">@Money(price)</td>
+                                            <td>
+                                                <div class="input-group input-group-sm mx-auto order-qty-control">
+                                                    <button type="button" class="btn btn-outline-secondary btn-minus" aria-label="Giảm số lượng"><i class="bi bi-dash"></i></button>
+                                                    <input asp-for="Items[i].SoLuong" class="form-control text-center quantity-input fw-bold" type="number" min="0" data-price="@price.ToString(CultureInfo.InvariantCulture)" />
+                                                    <button type="button" class="btn btn-outline-secondary btn-plus" aria-label="Tăng số lượng"><i class="bi bi-plus"></i></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="order-cart-column">
+            <div class="card app-card order-cart-card">
+                <div class="app-card-header">
+                    <div>
+                        <h5 class="mb-1 fw-bold text-primary"><i class="bi bi-basket2-fill me-2"></i> Giỏ hàng</h5>
+                        <div class="small text-muted" id="cart-customer-name">Tích điểm: Không</div>
+                    </div>
+                    <span class="badge badge-success-subtle" id="cart-item-count">0 món</span>
+                </div>
+                <div class="app-card-body">
+                    <div class="order-cart-summary">
+                        <div>
+                            <span class="text-muted small">Tổng số lượng</span>
+                            <strong id="cart-total-qty">0</strong>
+                        </div>
+                        <div>
+                            <span class="text-muted small">Phục vụ</span>
+                            <strong id="cart-service-mode">Tại quán</strong>
+                        </div>
+                    </div>
+
+                    <div class="order-cart-items" id="cart-items">
+                        <div class="text-center text-muted py-4" id="cart-empty-state">
+                            <i class="bi bi-basket fs-1 d-block mb-2"></i>
+                            Chưa chọn món nào.
+                        </div>
+                    </div>
+
+                    <div class="order-cart-note">
+                        <label asp-for="GhiChu" class="form-label fw-bold text-primary">Ghi chú đơn hàng</label>
+                        <textarea asp-for="GhiChu" class="form-control rounded-3" rows="2" placeholder="Ví dụ: ít đường, nhiều sữa, không đá..." maxlength="100"></textarea>
+                    </div>
+
+                    <div class="order-cart-totals">
+                        <div><span>Tạm tính</span><strong id="cart-subtotal">0 đ</strong></div>
+                        <div><span>Tổng giảm giá</span><strong class="text-warning" id="cart-discount">0 đ</strong></div>
+                        <div class="order-cart-grand"><span>Tổng cuối</span><strong id="cart-grand-total">0 đ</strong></div>
+                    </div>
+
+                    <div class="small text-muted mb-3">
+                        Khuyến mãi đang áp dụng theo từng món. Tổng tiền cuối cùng sẽ được SQL tính lại khi tạo hóa đơn.
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary rounded-pill py-2.5 shadow hover-lift" type="submit" @(canOrder ? null : "disabled")>
+                        <i class="bi bi-credit-card-2-front-fill me-1"></i> @(Model.IsEditing ? "Lưu thay đổi order" : "Tạo hóa đơn")
+                        </button>
+                        <button class="btn btn-outline-secondary rounded-pill" type="button" id="clear-cart-btn">
+                            <i class="bi bi-trash3 me-1"></i> Xóa chọn
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="order-mobile-submit no-print">
+        <div>
+            <span class="small text-muted d-block">Tổng cuối</span>
+            <strong id="mobile-grand-total">0 đ</strong>
+        </div>
+        <button class="btn btn-primary rounded-pill px-4" type="submit" @(canOrder ? null : "disabled")>
+            @(Model.IsEditing ? "Lưu thay đổi" : "Tạo hóa đơn")
+        </button>
+    </div>
+
+    <div class="modal fade" id="quickCustomerModal" tabindex="-1" aria-labelledby="quickCustomerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quickCustomerModalLabel">
+                        <i class="bi bi-person-plus-fill me-2"></i> Thêm khách nhanh
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger py-2 small d-none" id="quick-customer-error"></div>
+                    <div class="app-form-group">
+                        <label for="quick-customer-name">Tên khách hàng</label>
+                        <input type="text" class="form-control" id="quick-customer-name" maxlength="50" placeholder="Nhập tên khách hàng" />
+                    </div>
+                    <div class="app-form-group mb-0">
+                        <label for="quick-customer-phone">Số điện thoại</label>
+                        <input type="tel" class="form-control" id="quick-customer-phone" maxlength="10" placeholder="Nhập số điện thoại" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary rounded-pill" id="save-quick-customer-btn">
+                        <i class="bi bi-check2-circle me-1"></i> Lưu và chọn khách
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+</div>
+
+@section Scripts {
+    <script>
+        window.orderCreateConfig = {
+            searchCustomersUrl: '@Url.Action("SearchCustomers", "Order")',
+            quickCreateCustomerUrl: '@Url.Action("QuickCreateCustomer", "Order")',
+            promotions: @Html.Raw(promotionsJson),
+            areaTables: @Html.Raw(areaTablesJson),
+            isEditing: @Model.IsEditing.ToString().ToLowerInvariant(),
+            initialCustomer: @Html.Raw(initialCustomerJson)
+        };
+    </script>
+    <script src="~/js/order-create.js" asp-append-version="true"></script>
+}

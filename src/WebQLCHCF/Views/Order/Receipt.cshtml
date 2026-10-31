@@ -1,0 +1,362 @@
+﻿@using System.Globalization
+@using WebQLCHCF.Services
+@model OrderReceiptViewModel
+
+@{
+    ViewData["Title"] = "Hóa đơn " + Model.MaHD;
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    string Money(decimal value) => value.ToString("N0", culture) + " đ";
+    string StatusText(string value) => value switch
+    {
+        OrderWorkflowConstants.TrangThaiThanhToanChuaThanhToan => "Chưa thanh toán",
+        OrderWorkflowConstants.TrangThaiThanhToanChoThanhToanQr => "Chờ thanh toán QR",
+        OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan => "Đã thanh toán",
+        OrderWorkflowConstants.TrangThaiThanhToanHetHan => "QR hết hạn",
+        OrderWorkflowConstants.TrangThaiThanhToanDaHuy => "Đã hủy",
+        OrderWorkflowConstants.TrangThaiThanhToanChoKiemTra => "Chờ kiểm tra",
+        _ => value
+    };
+    string PaymentMethodText(string? value) => value switch
+    {
+        OrderWorkflowConstants.PhuongThucTienMat => "Tiền mặt",
+        OrderWorkflowConstants.PhuongThucQr => "QR",
+        _ => "Chưa chọn"
+    };
+    string PaymentBadgeClass(string value) => value switch
+    {
+        OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan => "badge-success-subtle",
+        OrderWorkflowConstants.TrangThaiThanhToanChoThanhToanQr => "badge-warning-subtle",
+        OrderWorkflowConstants.TrangThaiThanhToanChoKiemTra => "badge-warning-subtle",
+        OrderWorkflowConstants.TrangThaiThanhToanDaHuy => "badge-danger-subtle",
+        OrderWorkflowConstants.TrangThaiThanhToanHetHan => "badge-danger-subtle",
+        _ => "badge-info-subtle"
+    };
+    var isWaitingQr = Model.PendingQr != null
+        && Model.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanChoThanhToanQr;
+    var isPaid = Model.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan;
+    var receiptClass = isWaitingQr ? "receipt receipt-qr-mode" : "receipt";
+}
+
+<!-- ACTION TOOBAR (HIDDEN IN PRINT) -->
+<div class="d-flex justify-content-between align-items-center mb-4 no-print flex-wrap gap-2">
+    <div class="page-title-group">
+        <h2 class="mb-0 text-primary fw-bold"><i class="bi bi-file-earmark-ruled me-2"></i>Chi Tiết Hóa Đơn</h2>
+        <div class="text-muted">Mã giao dịch: <strong class="text-dark">#@Model.MaHD</strong></div>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary rounded-pill px-4 hover-lift" onclick="window.print()">
+            <i class="bi bi-printer-fill me-1"></i> In hóa đơn
+        </button>
+        <a asp-action="Create" class="btn btn-secondary rounded-pill px-4">
+            <i class="bi bi-plus-lg me-1"></i> Tạo order mới
+        </a>
+        <a asp-controller="HoaDon" asp-action="Details" asp-route-id="@Model.MaHD" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<!-- PRINTABLE RECEIPT TEMPLATE (K80 / THERMAL PRINT OPTIMIZED VIA SITE.CSS) -->
+<div class="card app-card @receiptClass mx-auto" style="border-radius: var(--app-radius-lg); box-shadow: var(--app-shadow);">
+    <div class="app-card-body p-4 p-md-5">
+        <!-- Cafe Logo Header -->
+        <div class="text-center border-bottom border-dashed pb-3 mb-4">
+            <i class="bi bi-cup-hot text-primary display-5 d-block mb-1"></i>
+            <h3 class="fw-extrabold text-primary mb-1 tracking-tight" style="font-size: 1.5rem; text-transform: uppercase;">WebQLCHCF Premium</h3>
+            <p class="text-muted small mb-0">Địa chỉ: 123 Đường Cà Phê, Quận 1, TP. HCM</p>
+            <p class="text-muted small mb-0">SĐT: 028.1234.5678</p>
+            <div class="badge badge-primary-subtle py-2 px-3 mt-3 font-monospace fs-6">
+                PHẦN THANH TOÁN HÓA ĐƠN
+            </div>
+        </div>
+
+        <!-- Receipt Metadata -->
+        <div class="row g-2 mb-4 fs-6">
+            <div class="col-6 text-muted">Mã hóa đơn:</div>
+            <div class="col-6 text-end fw-bold text-primary">#@Model.MaHD</div>
+            
+            <div class="col-6 text-muted">Ngày lập đơn:</div>
+            <div class="col-6 text-end">@Model.ThoiGianTao.ToString("dd/MM/yyyy HH:mm")</div>
+
+            @if (Model.ThoiGianThanhToan.HasValue)
+            {
+                <div class="col-6 text-muted">Thời gian thanh toán:</div>
+                <div class="col-6 text-end">@Model.ThoiGianThanhToan.Value.ToString("dd/MM/yyyy HH:mm")</div>
+            }
+            
+            <div class="col-6 text-muted">Thời gian in:</div>
+            <div class="col-6 text-end font-monospace">@Model.GioIn.ToString("HH:mm:ss dd/MM/yyyy")</div>
+            
+            <div class="col-6 text-muted">Nhân viên phục vụ:</div>
+            <div class="col-6 text-end fw-semibold">@Model.TenNV <span class="text-muted">(@Model.MaNV)</span></div>
+            
+            <div class="col-6 text-muted">Khách hàng:</div>
+            <div class="col-6 text-end fw-bold text-secondary">@(Model.TenKH ?? "Khách lẻ (Vãng lai)")</div>
+            
+            <div class="col-6 text-muted">Bàn phục vụ:</div>
+            <div class="col-6 text-end">
+                @if (Model.HinhThuc == "MangVe")
+                {
+                    <span class="badge badge-info-subtle">Đơn mang về (MVE)</span>
+                }
+                else
+                {
+                    <span class="badge badge-primary-subtle">Bàn số @Model.TenBan</span>
+                }
+            </div>
+            
+            @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
+            {
+                <div class="col-12 border-top border-dashed pt-2 mt-2">
+                    <div class="text-muted small mb-1">Ghi chú pha chế:</div>
+                    <div class="p-2.5 bg-light rounded-3 font-monospace small text-primary">
+                        <i class="bi bi-pencil-fill me-1"></i> @Model.GhiChu
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Itemized Table -->
+        <div class="table-responsive border-0 mb-4">
+            <table class="table table-sm align-middle" style="font-size: 0.95rem;">
+                <thead>
+                    <tr class="border-bottom border-2 text-primary" style="font-weight: 700;">
+                        <th>Tên món / Đồ uống</th>
+                        <th class="text-center" style="width: 50px;">SL</th>
+                        <th class="text-end" style="width: 100px;">Đơn giá</th>
+                        <th class="text-end" style="width: 120px;">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody class="border-bottom">
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="py-2.5">
+                                <div class="fw-semibold">@item.TenSP</div>
+                                @if (!string.IsNullOrWhiteSpace(item.TenKM))
+                                {
+                                    <span class="badge badge-warning-subtle py-0.5 px-1.5" style="font-size: 0.7rem;">
+                                        <i class="bi bi-gift-fill me-0.5"></i> @item.TenKM
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-center py-2.5 fw-bold">@item.SoLuong</td>
+                            <td class="text-end py-2.5 text-muted">@Money(item.DonGia)</td>
+                            <td class="text-end py-2.5 fw-bold text-dark">@Money(item.ThanhTien)</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3" class="text-end pt-3 fs-6 text-primary">Tổng cộng phải thanh toán:</th>
+                        <th class="text-end pt-3 fs-5 fw-extrabold text-success font-monospace">@Money(Model.TongTien)</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="receipt-payment-panel rounded-4 p-3 border border-dashed mb-4 no-print @(isWaitingQr ? "receipt-payment-panel-qr" : "bg-light")">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                <div>
+                    <h6 class="fw-bold text-primary mb-1">
+                        <i class="bi bi-credit-card-2-front-fill me-1"></i> Trạng thái thanh toán
+                    </h6>
+                    <div class="small text-muted">
+                        Phương thức: <strong>@PaymentMethodText(Model.PhuongThucThanhToan)</strong>
+                        @if (Model.ThoiGianThanhToan.HasValue)
+                        {
+                            <span> · @Model.ThoiGianThanhToan.Value.ToString("HH:mm dd/MM/yyyy")</span>
+                        }
+                    </div>
+                </div>
+                <span class="badge @PaymentBadgeClass(Model.TrangThaiThanhToan) py-2 px-3">
+                    @StatusText(Model.TrangThaiThanhToan)
+                </span>
+            </div>
+
+            @if (Model.CanPay)
+            {
+                <div class="small text-muted mb-3">
+                    Chọn một phương thức thanh toán cho hóa đơn này. Sau khi tạo QR, màn hình sẽ chuyển sang chế độ quét QR riêng.
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-12 col-md-6">
+                        <form asp-action="PayCash" asp-route-id="@Model.MaHD" method="post" data-no-pjax="true">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ghiChuThanhToan" value="Thanh toán tiền mặt tại quầy" />
+                            <button type="submit" class="btn btn-success w-100 rounded-pill"
+                                    onclick="return confirm('Xác nhận hoàn thành thanh toán tiền mặt?');">
+                                <i class="bi bi-cash-coin me-1"></i> Hoàn thành thanh toán tiền mặt
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <form asp-action="CreateQrPayment" asp-route-id="@Model.MaHD" method="post" data-no-pjax="true">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                                <i class="bi bi-qr-code me-1"></i> Tạo QR thanh toán
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+
+            @if (isWaitingQr && Model.PendingQr != null)
+            {
+                <div class="receipt-qr-waiting rounded-4 border bg-white p-3 p-md-4 mb-3">
+                    <div class="text-center mb-3">
+                        <div class="badge badge-warning-subtle py-2 px-3 mb-2">
+                            <i class="bi bi-hourglass-split me-1"></i> Chờ khách quét QR và chuyển khoản
+                        </div>
+                        <h5 class="fw-bold text-primary mb-1">Thanh toán QR</h5>
+                        <div class="text-muted small">Đưa màn hình này cho khách quét mã. Không chọn thêm phương thức khác khi phiên QR còn hiệu lực.</div>
+                    </div>
+                    <div class="row g-4 align-items-center">
+                        <div class="col-12 col-lg-5 text-center">
+                            @if (!string.IsNullOrWhiteSpace(Model.PendingQr.VietQrUrl))
+                            {
+                                <img src="@Model.PendingQr.VietQrUrl" alt="QR thanh toán" class="receipt-qr-image img-fluid rounded-4 border bg-white p-2" />
+                            }
+                        </div>
+                        <div class="col-12 col-lg-7">
+                            <div class="receipt-qr-info">
+                                <div class="receipt-qr-row">
+                                    <span>Ngân hàng</span>
+                                    <strong>MB Bank</strong>
+                                </div>
+                                <div class="receipt-qr-row">
+                                    <span>Số tài khoản</span>
+                                    <strong class="font-monospace">0332135258</strong>
+                                </div>
+                                <div class="receipt-qr-row">
+                                    <span>Chủ tài khoản</span>
+                                    <strong>HOANG CHIEM NGUYEN</strong>
+                                </div>
+                                <div class="receipt-qr-row receipt-qr-amount">
+                                    <span>Số tiền</span>
+                                    <strong>@Money(Model.PendingQr.SoTien)</strong>
+                                </div>
+                                <div class="receipt-qr-row">
+                                    <span>Mã phiên</span>
+                                    <code>@Model.PendingQr.MaPhienThanhToan</code>
+                                </div>
+                                <div class="receipt-qr-transfer mt-3">
+                                    <span class="text-muted small">Nội dung chuyển khoản</span>
+                                    <div class="fw-bold font-monospace">@Model.PendingQr.NoiDungChuyenKhoan</div>
+                                </div>
+                                <div class="receipt-qr-row mt-3">
+                                    <span>Hạn thanh toán</span>
+                                    <strong>@(Model.PendingQr.ThoiGianHetHan?.ToString("HH:mm:ss dd/MM/yyyy") ?? "Không xác định")</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center gap-2 flex-wrap mt-4">
+                        <form asp-action="ConfirmQrDemo" asp-route-id="@Model.MaHD" method="post" data-no-pjax="true">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="maPhienThanhToan" value="@Model.PendingQr.MaPhienThanhToan" />
+                            <button type="submit" class="btn btn-success rounded-pill px-4"
+                                    onclick="return confirm('Mô phỏng khách đã chuyển khoản cho phiên QR này?');">
+                                <i class="bi bi-check2-circle me-1"></i> Mô phỏng khách đã chuyển khoản
+                            </button>
+                        </form>
+                        <form asp-action="ExpireQr" asp-route-id="@Model.MaHD" method="post" data-no-pjax="true">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger rounded-pill px-4"
+                                    onclick="return confirm('Xử lý QR hết hạn cho hóa đơn này?');">
+                                <i class="bi bi-hourglass-bottom me-1"></i> Xử lý QR hết hạn
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (isPaid)
+            {
+                <div class="rounded-4 border bg-white p-3 mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="bi bi-check2-circle fs-3"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-success">Hóa đơn đã thanh toán</div>
+                            <div class="small text-muted">
+                                Phương thức: <strong>@PaymentMethodText(Model.PhuongThucThanhToan)</strong>
+                                @if (Model.ThoiGianThanhToan.HasValue)
+                                {
+                                    <span> · @Model.ThoiGianThanhToan.Value.ToString("HH:mm dd/MM/yyyy")</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (Model.CanEditOrder || Model.CanCancelOrder)
+            {
+                <div class="d-flex gap-2 flex-wrap">
+                    @if (Model.CanEditOrder)
+                    {
+                        <form asp-action="EditOrder" asp-route-id="@Model.MaHD" method="post" data-no-pjax="true">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-primary rounded-pill"
+                                    onclick="return confirm('Chuyển order về trạng thái sửa? Phiên QR đang chờ sẽ bị hủy, bàn vẫn Đang phục vụ.');">
+                                <i class="bi bi-pencil-square me-1"></i> Sửa order
+                            </button>
+                        </form>
+                    }
+                    @if (Model.CanCancelOrder)
+                    {
+                        <form asp-action="CancelOrder" asp-route-id="@Model.MaHD" method="post" data-no-pjax="true" class="d-flex gap-2 flex-wrap">
+                            @Html.AntiForgeryToken()
+                            <input name="lyDo" class="form-control form-control-sm rounded-pill" style="max-width: 260px;" placeholder="Lý do hủy order" required />
+                            <button type="submit" class="btn btn-outline-danger rounded-pill"
+                                    onclick="return confirm('Hủy order chưa thanh toán và trả bàn về Trống nếu là đơn tại quán?');">
+                                <i class="bi bi-x-circle me-1"></i> Hủy order
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Loyalty Points Panel (If customer selected) -->
+        @if (!string.IsNullOrWhiteSpace(Model.MaKH))
+        {
+            <div class="bg-light rounded-4 p-3 border border-dashed mb-4 small">
+                <h6 class="fw-bold text-primary mb-2 d-flex align-items-center gap-1">
+                    <i class="bi bi-star-fill text-warning"></i> Chương trình thành viên
+                </h6>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Điểm tích lũy hiện tại:</span>
+                    <strong class="text-dark">@(Model.DiemTichLuy ?? 0) điểm</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Điểm tích lũy đã cộng:</span>
+                    <strong class="text-success">+@(Model.DiemDaCong ?? 0) điểm</strong>
+                </div>
+            </div>
+        }
+
+        <!-- Footer greeting -->
+        <div class="text-center border-top border-dashed pt-4">
+            <h6 class="fw-bold text-primary mb-1">Xin cảm ơn Quý khách!</h6>
+            <p class="text-muted small mb-0">Hẹn gặp lại Quý khách lần sau!</p>
+            <p class="text-muted small mt-2" style="font-size: 0.7rem;">Powered by WebQLCHCF System</p>
+        </div>
+    </div>
+</div>
+
+<!-- ACTIONS PANEL FOR ACTIVE SHIFT -->
+@if (Model.CanCompleteTable)
+{
+    <div class="text-center mt-4 mb-5 no-print">
+        <form asp-action="CompleteTable" asp-route-id="@Model.MaHD" method="post" data-no-pjax="true" onsubmit="return confirm('Xác nhận khách đã đi và trả bàn này về Trống?');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 py-3 shadow hover-lift d-inline-flex align-items-center gap-2">
+                <i class="bi bi-check2-circle fs-4"></i>
+                <span class="fw-bold">Khách đi / Trả bàn</span>
+            </button>
+        </form>
+    </div>
+}
+

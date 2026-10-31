@@ -1,0 +1,31 @@
+## .NET Core
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+## Environment & Secrets
+.env
+*.env.local
+
+## Backup archives
+archives/
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+## Build & Test Logs
+*.log
+TestResults/
+coverage/
+codex-run.log
+codex-run.err.log
+codex-docx-smoke.*
+
+## OS Files
+.DS_Store
+Thumbs.db
