@@ -10,6 +10,7 @@ obj/
 ## Environment & Secrets
 .env
 *.env.local
+.agents/
 
 ## Backup archives
 archives/

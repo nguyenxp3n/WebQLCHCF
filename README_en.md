@@ -5,9 +5,9 @@
 ![Database](https://img.shields.io/badge/SQL_Server-2022-red)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
 ![Architecture](https://img.shields.io/badge/Architecture-4--Tier%20MVC-success)
-![Automated Tests](https://img.shields.io/badge/xUnit-77%20Passed-brightgreen)
+![Automated Tests](https://img.shields.io/badge/xUnit-181%20Passed-brightgreen)
 
-> **Enterprise Coursework Project:** A production-style coffee shop point-of-sale (POS) and operations platform featuring table dispatching, inventory recipes, shift attendance with concurrency control, dynamic VietQR contactless payments, and a 77-case automated test suite.
+> **Enterprise Coursework Project:** A production-style coffee shop point-of-sale (POS) and operations platform featuring table dispatching, inventory recipes, shift attendance with concurrency control, dynamic VietQR contactless payments, and a 181-case automated test suite.
 
 ---
 

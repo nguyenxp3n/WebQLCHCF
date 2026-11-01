@@ -5,7 +5,7 @@
 ![Database](https://img.shields.io/badge/SQL_Server-2022-red)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
 ![Architecture](https://img.shields.io/badge/Architecture-4--Tier%20MVC-success)
-![Automated Tests](https://img.shields.io/badge/xUnit-77%20Passed-brightgreen)
+![Automated Tests](https://img.shields.io/badge/xUnit-181%20Passed-brightgreen)
 
 > **Dự án thực hành chuyên sâu:** Xây dựng hệ thống quản lý bán hàng tại quầy (POS), điều phối bàn thời gian thực, quản lý kho nguyên liệu theo định lượng công thức, chấm công tự động theo ca và tích hợp thanh toán mã động VietQR.
 
@@ -271,7 +271,14 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 
 ---
 
-## 6. Minh Chứng & Báo Cáo Đồ Án
+## 6. Bộ Kiểm Thử Tự Động & Tiêu Chuẩn Chất Lượng (QA Standards)
 
-* Báo cáo kiểm thử phần mềm 52 test cases đầy đủ: [`docs/Bao_Cao_Kiem_Thu_Phan_Mem.docx`](docs/Bao_Cao_Kiem_Thu_Phan_Mem.docx)
-* Tài liệu đặc tả kỹ thuật chi tiết: [`docs/PROJECT_OVERVIEW_QLCHCF.md`](docs/PROJECT_OVERVIEW_QLCHCF.md)
+* **Bộ kiểm thử tự động xUnit**: **181/181 test cases Passed 100%** (Thời gian chạy: ~48ms).
+* **Độ bao phủ kiểm thử**:
+  * **Kiểm thử kiến trúc Reflection (`SecurityArchitectureTests`)**: Quét toàn bộ 18 Controller trong assembly, bảo đảm 100% Controller có thuộc tính `[RoleAuthorize]` (hoặc `[AllowAnonymous]`), action đọc có `[HttpGet]`, và action POST có `[ValidateAntiForgeryToken]`.
+  * **Tính bất biến hóa đơn (`InvoiceImmutabilityTests`)**: Bảo vệ hóa đơn đã thanh toán (`DaThanhToan`) không thể bị sửa, thêm hoặc xóa dòng món.
+  * **Quy trình điểm thưởng (`LoyaltyPointsWorkflowTests`)**: Xác nhận điểm thưởng chỉ được tích khi thanh toán hoàn tất và tự động hoàn trả khi hủy đơn.
+  * **Ràng buộc khuyến mãi (`PromotionDateValidationTests`)**: Kiểm tra biên ngày bắt đầu và kết thúc.
+  * **Tính lương chính xác theo phút (`PayrollPrecisionTests`)**: Khử hoàn toàn độ lệch làm tròn tiền lương giữa C# và SQL Server qua 2.400 phút mô phỏng.
+  * **Kiểm thử đối kháng (`ChallengerM2EmpiricalTests`)**: Thử nghiệm tấn công vượt quyền và kiểm tra khóa bi quan chống race condition.
+* **Đường ống CI/CD**: Tự động hóa hoàn toàn với GitHub Actions, build và test trên môi trường Ubuntu container mỗi lần push hoặc tạo PR.

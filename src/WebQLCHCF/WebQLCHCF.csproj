@@ -16,10 +16,5 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="codex-wl-slim\**\*.cs" />
-    <Content Remove="codex-wl-slim\**\*" />
-    <None Remove="codex-wl-slim\**\*" />
-  </ItemGroup>
 
 </Project>
