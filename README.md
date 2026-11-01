@@ -380,6 +380,10 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 
 ### Danh sách tài khoản thử nghiệm mẫu:
 
+> [!WARNING]
+> **Khuyến cáo An toàn Thông tin & Vận hành:**
+> Toàn bộ tài khoản (`qly_tram`, `pc_mai`, `pv_tu`) và mật khẩu mẫu trong tài liệu này **chỉ phục vụ môi trường học thuật, kiểm thử và đánh giá kỹ thuật (Sandbox / Evaluation)**. Khi triển khai hệ thống vào môi trường sản xuất thực tế (Production), bắt buộc phải đổi toàn bộ mật khẩu SA, vô hiệu hóa hoặc xóa các tài khoản mẫu này và thiết lập chính sách mật khẩu mạnh theo quy chuẩn.
+
 | Tài khoản | Mật khẩu | Nhân viên | Vai trò | Trải nghiệm gợi ý |
 | :--- | :--- | :--- | :--- | :--- |
 | `qly_tram` | `12345678` | NV01 (Trâm) | **Quản Lý** | Xem Dashboard doanh thu, xem bảng lương, nhật ký Audit Log |

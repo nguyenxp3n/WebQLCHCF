@@ -241,7 +241,13 @@ public class TaiKhoanController : BaseController
                     .TaiKhoanDetailResults.FromSqlInterpolated($"EXEC TaiKhoan_CT {id}")
                     .ToListAsync()
             ).FirstOrDefault();
-            return item == null ? NotFound() : View(MapToModel(item));
+            if (item == null)
+            {
+                return NotFound();
+            }
+            var model = MapToModel(item);
+            model.MatKhau = string.Empty;
+            return View(model);
         }
         catch (Exception ex)
         {
@@ -260,7 +266,13 @@ public class TaiKhoanController : BaseController
             return NotFound();
         }
         var before = await _context.TaiKhoans.AsNoTracking().FirstOrDefaultAsync(x => x.MaTK == model.MaTK);
-        if (before == null || !string.Equals(model.MatKhau, before.MatKhau, StringComparison.Ordinal))
+        if (before == null)
+        {
+            return NotFound();
+        }
+
+        bool isChangingPassword = !string.IsNullOrWhiteSpace(model.MatKhau);
+        if (isChangingPassword)
         {
             if (!PasswordPolicyValidator.ValidatePassword(model.MatKhau, model.MatKhau, model.TenDangNhap, out var errors))
             {
@@ -270,6 +282,10 @@ public class TaiKhoanController : BaseController
                 }
             }
         }
+        else
+        {
+            ModelState.Remove(nameof(model.MatKhau));
+        }
 
         if (!ModelState.IsValid)
         {
@@ -277,12 +293,10 @@ public class TaiKhoanController : BaseController
         }
         try
         {
-            before ??= await _context.TaiKhoans.AsNoTracking().FirstOrDefaultAsync(x => x.MaTK == model.MaTK);
-            var passwordToSave = model.MatKhau;
-            if (before == null || !string.Equals(model.MatKhau, before.MatKhau, StringComparison.Ordinal))
-            {
-                passwordToSave = _passwordHasherService.HashPassword(model, model.MatKhau);
-            }
+            var passwordToSave = isChangingPassword
+                ? _passwordHasherService.HashPassword(model, model.MatKhau)
+                : before.MatKhau;
+
             await _context.Database.ExecuteSqlInterpolatedAsync(
                 $"EXEC TaiKhoan_Sua {model.MaTK}, {model.TenDangNhap}, {passwordToSave}, {model.MaNV}, {model.VaiTro}"
             );
@@ -291,7 +305,7 @@ public class TaiKhoanController : BaseController
                 "Sửa tài khoản",
                 "TaiKhoan",
                 model.MaTK,
-                $"Sửa tài khoản {model.TenDangNhap}: vai trò {before?.VaiTro ?? "không rõ"} -> {model.VaiTro}, nhân viên {before?.MaNV ?? "không rõ"} -> {model.MaNV}."
+                $"Sửa tài khoản {model.TenDangNhap}: vai trò {before.VaiTro} -> {model.VaiTro}, nhân viên {before.MaNV} -> {model.MaNV}{(isChangingPassword ? ", đổi mật khẩu" : "")}."
             );
             TempData["Success"] = "Cập nhật dữ liệu thành công.";
             return RedirectToAction(nameof(Index));

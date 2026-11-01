@@ -19,12 +19,21 @@ echo "==> Checking if database QLCHCF already exists..."
 DB_EXISTS=$(/opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$SA_PASSWORD" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name = 'QLCHCF';" | tr -d '[:space:]')
 
 if [ "$DB_EXISTS" = "1" ]; then
-    echo "==> Database QLCHCF already exists. Skipping recreation to preserve existing transactional data."
-    exit 0
+    echo "==> Database QLCHCF already exists. Preserving existing transactional data."
+else
+    echo "==> Initializing fresh database QLCHCF from /database/init.sql..." 
+    /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$SA_PASSWORD" -C -b -i /database/init.sql
 fi
 
-echo "==> Initializing database QLCHCF from /database/init.sql..." 
-/opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$SA_PASSWORD" -C -b -i /database/init.sql
+# Run versioned incremental migrations (safe for both fresh and existing databases)
+if [ -d "/database/migrations" ]; then
+    for migration_file in /database/migrations/*.sql; do
+        if [ -f "$migration_file" ]; then
+            echo "==> Applying migration: $migration_file..."
+            /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$SA_PASSWORD" -C -b -i "$migration_file"
+        fi
+    done
+fi
 
-echo "==> All database initialization tasks completed successfully!"
+echo "==> All database initialization and migration tasks completed successfully!"
 exit 0

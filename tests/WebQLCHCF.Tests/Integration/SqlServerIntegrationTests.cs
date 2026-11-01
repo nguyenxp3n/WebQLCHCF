@@ -65,10 +65,14 @@ public class SqlServerIntegrationTests
             canConnect = false;
         }
 
-        if (!canConnect)
+        var isStrict = string.Equals(Environment.GetEnvironmentVariable("REQUIRE_SQLSERVER_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+        if (isStrict)
         {
-            // Graceful verification: Server not present in this test environment.
-            // Verified that connection attempt fails safely with clear diagnostics without crashing.
+            Assert.True(canConnect, "SQL Server must be reachable and responsive in strict CI testing mode.");
+        }
+        else if (!canConnect)
+        {
+            // Graceful verification: Server not present in this local offline environment.
             Assert.False(canConnect);
             return;
         }
@@ -77,9 +81,9 @@ public class SqlServerIntegrationTests
         using var connection = new SqlConnection(connStr);
         await connection.OpenAsync();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(*) FROM sys.tables WHERE name IN ('TaiKhoan', 'Ban', 'HoaDon');";
+        command.CommandText = "SELECT COUNT(*) FROM sys.tables WHERE name IN ('TaiKhoan', 'Ban', 'HoaDon', 'SanPham', 'NhanVien', 'NguyenLieu');";
         var count = Convert.ToInt32(await command.ExecuteScalarAsync());
 
-        Assert.True(count >= 3, "Live SQL Server must contain the essential tables.");
+        Assert.True(count >= 6, "Live SQL Server must contain the essential tables.");
     }
 }

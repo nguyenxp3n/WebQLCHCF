@@ -1,6 +1,8 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
+using WebQLCHCF.Controllers;
 using WebQLCHCF.Data;
 using WebQLCHCF.ViewModels;
 
@@ -12,13 +14,19 @@ public class OrderService : IOrderService
     private const string TrangThaiKhuyenMaiDangApDung = "Đang áp dụng";
     private const string LoaiKhuyenMaiTienMat = "Tiền mặt";
     private const string LoaiKhuyenMaiPhanTram = "Phần trăm";
-    private const string VietQrBankCode = "MB";
-    private const string VietQrAccountNo = "0332135258";
-    private const string VietQrAccountName = "HOANG CHIEM NGUYEN";
 
     private readonly AppDbContext _context;
+    private readonly string _bankCode;
+    private readonly string _accountNo;
+    private readonly string _accountName;
 
-    public OrderService(AppDbContext context) => _context = context;
+    public OrderService(AppDbContext context, IConfiguration? configuration = null)
+    {
+        _context = context;
+        _bankCode = configuration?["VietQr:BankCode"] ?? "MB";
+        _accountNo = configuration?["VietQr:AccountNo"] ?? "0332135258";
+        _accountName = configuration?["VietQr:AccountName"] ?? "HOANG CHIEM NGUYEN";
+    }
 
     public async Task<OrderCreateViewModel> GetCreateModelAsync()
     {
@@ -199,26 +207,36 @@ public class OrderService : IOrderService
             maKh = customerExists ? model.MaKH : null;
         }
 
+        string? targetMaHD = null;
         var strategy = _context.Database.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
         {
+            // Idempotency guard: If this delegate is retried after a transient connection failure on commit,
+            // check if the targeted invoice was already created and committed successfully.
+            if (!string.IsNullOrWhiteSpace(targetMaHD))
+            {
+                var existing = await _context.HoaDons.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.MaHD == targetMaHD);
+                if (existing != null)
+                {
+                    return existing.MaHD;
+                }
+            }
+
             await using var tx = await _context.Database.BeginTransactionAsync();
             try
             {
                 var maBan = await ResolveTableAsync(model);
-                await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC HoaDon_Them {(string?)null}, {DateTime.Today}, {maNV}, {maKh}, {model.GhiChu}, {maBan}"
+                targetMaHD ??= await NextCodeHelper.NextHoaDonAsync(
+                    _context.HoaDons.Select(x => x.MaHD),
+                    DateTime.Today
                 );
 
-                var maHD = await _context
-                    .HoaDons.AsNoTracking()
-                    .Where(x => x.MaNV == maNV && x.NgayLap == DateTime.Today && x.MaBan == maBan)
-                    .OrderByDescending(x => x.MaHD)
-                    .Select(x => x.MaHD)
-                    .FirstOrDefaultAsync();
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"EXEC HoaDon_Them {targetMaHD}, {DateTime.Today}, {maNV}, {maKh}, {model.GhiChu}, {maBan}"
+                );
 
-                if (string.IsNullOrWhiteSpace(maHD))
-                    throw new InvalidOperationException("Không tìm thấy hóa đơn vừa tạo.");
+                var maHD = targetMaHD;
 
                 foreach (var item in orderItems)
                 {
@@ -743,14 +761,14 @@ public class OrderService : IOrderService
     private static bool IsPayable(string trangThaiOrder, string trangThaiThanhToan) =>
         TableWorkflowManager.IsPayable(trangThaiOrder, trangThaiThanhToan);
 
-    private static string BuildVietQrUrl(decimal amount, string maPhienThanhToan)
+    private string BuildVietQrUrl(decimal amount, string maPhienThanhToan)
     {
         return CafeOrderCalculator.SinhUrlVietQr(
             amount,
             maPhienThanhToan,
-            VietQrBankCode,
-            VietQrAccountNo,
-            VietQrAccountName
+            _bankCode,
+            _accountNo,
+            _accountName
         );
     }
 

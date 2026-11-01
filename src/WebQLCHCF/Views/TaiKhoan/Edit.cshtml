@@ -30,6 +30,10 @@
 
     string V(string f)
     {
+        if (f.Contains("MatKhau") || f.Contains("Password"))
+        {
+            return "";
+        }
         var v = Model.GetType().GetProperty(f)?.GetValue(Model);
         if (v == null)
         {
@@ -91,6 +95,11 @@
                                 <span class="input-group-text bg-white text-muted"><i class="bi bi-box-arrow-in-right"></i></span>
                                 <select class="form-select" id="@f" name="@f" asp-items="dds[f]"></select>
                             </div>
+                        }
+                        else if (f.Contains("MatKhau") || f.Contains("Password"))
+                        {
+                            <input class="form-control" id="@f" name="@f" type="password" value="" placeholder="Để trống nếu không đổi mật khẩu" autocomplete="new-password" />
+                            <div class="form-text text-muted small mt-1">Để trống nếu muốn giữ nguyên mật khẩu hiện tại.</div>
                         }
                         else
                         {

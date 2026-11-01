@@ -10,6 +10,20 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "Password@123!"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Password@123!' -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -26,5 +40,19 @@ jobs:
     - name: Build Solution
       run: dotnet build WebQLCHCF.slnx --no-restore -c Release
 
-    - name: Execute Automated Unit Tests
+    - name: Initialize SQL Server Database & Migrations
+      run: |
+        echo "==> Executing database/init.sql into SQL Server service..."
+        docker exec -i ${{ job.services.mssql.id }} /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Password@123!" -C -b < database/init.sql
+        for migration in database/migrations/*.sql; do
+          if [ -f "$migration" ]; then
+            echo "==> Applying migration $migration..."
+            docker exec -i ${{ job.services.mssql.id }} /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Password@123!" -C -b < "$migration"
+          fi
+        done
+
+    - name: Execute Automated Unit & Integration Tests (Live SQL Server)
+      env:
+        TEST_SQLSERVER_CONNECTION: "Server=localhost,1433;Database=QLCHCF;User Id=sa;Password=Password@123!;TrustServerCertificate=True;Encrypt=False;Connect Timeout=10;"
+        REQUIRE_SQLSERVER_TEST: "true"
       run: dotnet test WebQLCHCF.slnx --no-build -c Release --verbosity normal --collect:"XPlat Code Coverage"
