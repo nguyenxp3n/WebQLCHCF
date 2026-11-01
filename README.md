@@ -5,7 +5,7 @@
 ![Database](https://img.shields.io/badge/SQL_Server-2022-red)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
 ![Architecture](https://img.shields.io/badge/Architecture-4--Tier%20MVC-success)
-![Automated Tests](https://img.shields.io/badge/xUnit-181%20Passed-brightgreen)
+![Automated Tests](https://img.shields.io/badge/xUnit-335%20Passed-brightgreen)
 
 > **Dự án thực hành chuyên sâu:** Xây dựng hệ thống quản lý bán hàng tại quầy (POS), điều phối bàn thời gian thực, quản lý kho nguyên liệu theo định lượng công thức, chấm công tự động theo ca và tích hợp thanh toán mã động VietQR.
 
@@ -207,7 +207,7 @@ erDiagram
    * Tách logic tính giá tiền, khấu trừ khuyến mãi và tích lũy điểm thưởng thành `CafeOrderCalculator`.
    * Tách tính giờ làm và lương ca thành `PayrollCalculator`.
 5. **Kiểm thử tự động đa tầng (Automated Testing Suite):**
-   * Bộ kiểm thử xUnit với **77 test cases** bao phủ toàn bộ các trường hợp biên: đơn giá âm, số lượng = 0, chiết khấu vượt quá 100%, ca làm qua đêm, độ phức tạp mật khẩu và kiểm tra phân quyền.
+   * Bộ kiểm thử xUnit với **335 test cases** bao phủ toàn bộ các trường hợp biên: đơn giá âm, số lượng = 0, chiết khấu vượt quá 100%, ca làm qua đêm, độ phức tạp mật khẩu và kiểm tra phân quyền.
 
 ---
 
@@ -273,7 +273,7 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 
 ## 6. Bộ Kiểm Thử Tự Động & Tiêu Chuẩn Chất Lượng (QA Standards)
 
-* **Bộ kiểm thử tự động xUnit**: **181/181 test cases Passed 100%** (Thời gian chạy: ~48ms).
+* **Bộ kiểm thử tự động xUnit**: **335/335 test cases Passed 100%** (Thời gian chạy: ~48ms).
 * **Độ bao phủ kiểm thử**:
   * **Kiểm thử kiến trúc Reflection (`SecurityArchitectureTests`)**: Quét toàn bộ 18 Controller trong assembly, bảo đảm 100% Controller có thuộc tính `[RoleAuthorize]` (hoặc `[AllowAnonymous]`), action đọc có `[HttpGet]`, và action POST có `[ValidateAntiForgeryToken]`.
   * **Tính bất biến hóa đơn (`InvoiceImmutabilityTests`)**: Bảo vệ hóa đơn đã thanh toán (`DaThanhToan`) không thể bị sửa, thêm hoặc xóa dòng món.
