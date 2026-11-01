@@ -287,7 +287,7 @@ public class HoaDonController : BaseController
             return false;
 
         return await _context.HoaDons.AsNoTracking()
-            .AnyAsync(x => x.MaHD == maHD && x.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan);
+            .AnyAsync(x => x.MaHD == maHD && (x.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan || x.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanChoThanhToanQr));
     }
 
     [HttpGet]

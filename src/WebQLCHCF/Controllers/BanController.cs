@@ -311,6 +311,52 @@ public class BanController : BaseController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Restore(string maBan)
+    {
+        try
+        {
+            var table = await GetPhysicalTableForStatusChangeAsync(maBan);
+            if (table.TrangThai == TrangThaiOffline)
+            {
+                TempData["Success"] = $"Bàn {table.TenBan} hiện đã ở trạng thái Trống.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var unpaidOrders = await _context.HoaDons
+                .Where(x => x.MaBan == table.MaBan
+                    && x.TrangThaiOrder != OrderWorkflowConstants.TrangThaiOrderDaHuy
+                    && x.TrangThaiThanhToan != OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
+                .ToListAsync();
+
+            foreach (var order in unpaidOrders)
+            {
+                order.TrangThaiOrder = OrderWorkflowConstants.TrangThaiOrderDaHuy;
+                order.GhiChu = string.IsNullOrWhiteSpace(order.GhiChu)
+                    ? "[Hủy do khôi phục bàn]"
+                    : order.GhiChu + " [Hủy do khôi phục bàn]";
+            }
+
+            await _context.Database.ExecuteSqlInterpolatedAsync($"EXEC Ban_KhachDi {table.MaBan}");
+            await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync(
+                "Bàn",
+                "Khôi phục bàn",
+                "Ban",
+                table.MaBan,
+                $"Bàn {table.MaBan} ({table.TenBan}) được khôi phục về trạng thái Trống."
+            );
+            TempData["Success"] = $"Khôi phục thành công! {table.TenBan} đã chuyển về trạng thái Trống.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = FriendlyTableStatusError(ex);
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> CustomerLeaves(string maBan)
     {
         try

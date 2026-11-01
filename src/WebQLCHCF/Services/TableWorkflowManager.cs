@@ -50,6 +50,12 @@ public static class TableWorkflowManager
             return false;
         }
 
+        if (string.Equals(trangThaiThanhToan, OrderWorkflowConstants.TrangThaiThanhToanChoThanhToanQr, StringComparison.OrdinalIgnoreCase))
+        {
+            reason = "Hóa đơn đang chờ thanh toán QR, không thể sửa.";
+            return false;
+        }
+
         reason = null;
         return true;
     }

@@ -264,9 +264,11 @@ public class AccountController : Controller
     private IActionResult RedirectAfterLogin(string? vaiTro = null)
     {
         vaiTro ??= HttpContext.Session.GetString("VaiTro");
-        return string.Equals(vaiTro, AppRoles.QuanLy, StringComparison.OrdinalIgnoreCase)
-            ? RedirectToAction("Index", "Home")
-            : RedirectToAction("Create", "Order");
+        if (string.Equals(vaiTro, AppRoles.QuanLy, StringComparison.OrdinalIgnoreCase))
+            return RedirectToAction("Index", "Home");
+        if (string.Equals(vaiTro, AppRoles.PhaChe, StringComparison.OrdinalIgnoreCase))
+            return RedirectToAction("Index", "NguyenLieu");
+        return RedirectToAction("Create", "Order");
     }
 
     private void ValidateNewPassword(ChangePasswordViewModel model, string tenDangNhap)

@@ -424,8 +424,7 @@ public class OrderService : IOrderService
             TrangThaiBan = ban?.TrangThai,
             CanPay = canChoosePayment,
             CanCreateQr = canChoosePayment,
-            CanEditOrder = trangThaiThanhToan != OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan
-                && trangThaiOrder != OrderWorkflowConstants.TrangThaiOrderDaHuy,
+            CanEditOrder = TableWorkflowManager.CanEditOrder(trangThaiOrder, trangThaiThanhToan, out _),
             CanCancelOrder = trangThaiThanhToan != OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan
                 && trangThaiOrder != OrderWorkflowConstants.TrangThaiOrderDaHuy,
             CanCompleteTable = header.MaBan != OrderWorkflowConstants.MaBanMangVe
@@ -487,6 +486,8 @@ public class OrderService : IOrderService
 
         if (result.Success)
         {
+            await DeductInventoryForInvoiceAsync(maHD);
+
             var invoice = await _context.HoaDons.AsNoTracking()
                 .Where(x => x.MaHD == maHD)
                 .Select(x => new { x.MaKH })
@@ -540,6 +541,8 @@ public class OrderService : IOrderService
 
         if (result.Success)
         {
+            await DeductInventoryForInvoiceAsync(maHD);
+
             var invoice = await _context.HoaDons.AsNoTracking()
                 .Where(x => x.MaHD == maHD)
                 .Select(x => new { x.MaKH })
@@ -961,5 +964,62 @@ public class OrderService : IOrderService
 
         table.TrangThai = trangThai;
         await _context.SaveChangesAsync();
+    }
+    private async Task DeductInventoryForInvoiceAsync(string maHD)
+    {
+        try
+        {
+            var lineItems = await _context.CTHDs.AsNoTracking()
+                .Where(x => x.MaHD == maHD)
+                .Select(x => new { x.MaSP, x.SoLuong })
+                .ToListAsync();
+
+            if (!lineItems.Any())
+                return;
+
+            var productIds = lineItems.Select(x => x.MaSP).Distinct().ToList();
+            var recipes = await _context.CongThucs.AsNoTracking()
+                .Where(x => productIds.Contains(x.MaSP))
+                .ToListAsync();
+
+            if (!recipes.Any())
+                return;
+
+            var deductions = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in lineItems)
+            {
+                var itemRecipes = recipes.Where(r => string.Equals(r.MaSP, item.MaSP, StringComparison.OrdinalIgnoreCase));
+                foreach (var r in itemRecipes)
+                {
+                    var totalDeduct = r.DinhLuong * item.SoLuong;
+                    if (deductions.ContainsKey(r.MaNL))
+                        deductions[r.MaNL] += totalDeduct;
+                    else
+                        deductions[r.MaNL] = totalDeduct;
+                }
+            }
+
+            var ingredientIds = deductions.Keys.ToList();
+            var ingredients = await _context.NguyenLieus
+                .Where(x => ingredientIds.Contains(x.MaNL))
+                .ToListAsync();
+
+            foreach (var ing in ingredients)
+            {
+                if (deductions.TryGetValue(ing.MaNL, out var deductAmount))
+                {
+                    var currentStock = ing.SoLuongTon ?? 0;
+                    var newStock = currentStock - (int)Math.Round(deductAmount, MidpointRounding.AwayFromZero);
+                    ing.SoLuongTon = Math.Max(0, newStock);
+                    ing.NgayCapNhat = DateTime.Today;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            // Trừ kho nguyên liệu hỗ trợ; không làm crash giao dịch thanh toán chính
+        }
     }
 }

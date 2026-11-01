@@ -24,7 +24,7 @@ if [ "$DB_EXISTS" = "1" ]; then
 fi
 
 echo "==> Initializing database QLCHCF from /database/init.sql..." 
-/opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$SA_PASSWORD" -C -i /database/init.sql
+/opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$SA_PASSWORD" -C -b -i /database/init.sql
 
 echo "==> All database initialization tasks completed successfully!"
 exit 0

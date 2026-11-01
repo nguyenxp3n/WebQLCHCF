@@ -69,39 +69,48 @@
                         </a>
                     }
 
-                    <div class="menu-category">Bán hàng</div>
-                    <a class="sidebar-nav-link @(controllerName == "Order" ? "active" : "")" asp-controller="Order" asp-action="Create">
-                        <i class="bi bi-cup-hot"></i>
-                        <span>Order Tại Quầy</span>
-                    </a>
-                    <a class="sidebar-nav-link @(controllerName == "HoaDon" ? "active" : "")" asp-controller="HoaDon" asp-action="Index">
-                        <i class="bi bi-receipt-cutoff"></i>
-                        <span>Hóa Đơn & Chi Tiết</span>
-                    </a>
-                    <a class="sidebar-nav-link @(controllerName == "KhachHang" ? "active" : "")" asp-controller="KhachHang" asp-action="Index">
-                        <i class="bi bi-people-fill"></i>
-                        <span>Khách Hàng</span>
-                    </a>
-
-                    <div class="menu-category">Quản lý quán</div>
-                    <a class="sidebar-nav-link @(controllerName == "Ban" ? "active" : "")" asp-controller="Ban" asp-action="Index">
-                        <i class="bi bi-table"></i>
-                        <span>Quản Lý Bàn</span>
-                    </a>
-                    @if (isQuanLy)
+                    @if (!isPhaChe)
                     {
-                        <a class="sidebar-nav-link @(controllerName == "SanPham" ? "active" : "")" asp-controller="SanPham" asp-action="Index">
-                            <i class="bi bi-box-seam-fill"></i>
-                            <span>Sản Phẩm</span>
+                        <div class="menu-category">Bán hàng</div>
+                        <a class="sidebar-nav-link @(controllerName == "Order" ? "active" : "")" asp-controller="Order" asp-action="Create">
+                            <i class="bi bi-cup-hot"></i>
+                            <span>Order Tại Quầy</span>
                         </a>
-                        <a class="sidebar-nav-link @(controllerName == "LoaiSP" ? "active" : "")" asp-controller="LoaiSP" asp-action="Index">
-                            <i class="bi bi-tags-fill"></i>
-                            <span>Loại Sản Phẩm</span>
+                        <a class="sidebar-nav-link @(controllerName == "HoaDon" ? "active" : "")" asp-controller="HoaDon" asp-action="Index">
+                            <i class="bi bi-receipt-cutoff"></i>
+                            <span>Hóa Đơn & Chi Tiết</span>
                         </a>
-                        <a class="sidebar-nav-link @(controllerName == "KhuyenMai" ? "active" : "")" asp-controller="KhuyenMai" asp-action="Index">
-                            <i class="bi bi-percent"></i>
-                            <span>Khuyến Mãi</span>
+                        <a class="sidebar-nav-link @(controllerName == "KhachHang" ? "active" : "")" asp-controller="KhachHang" asp-action="Index">
+                            <i class="bi bi-people-fill"></i>
+                            <span>Khách Hàng</span>
                         </a>
+                    }
+
+                    @if (!isPhaChe || isQuanLy)
+                    {
+                        <div class="menu-category">Quản lý quán</div>
+                        @if (!isPhaChe)
+                        {
+                            <a class="sidebar-nav-link @(controllerName == "Ban" ? "active" : "")" asp-controller="Ban" asp-action="Index">
+                                <i class="bi bi-table"></i>
+                                <span>Quản Lý Bàn</span>
+                            </a>
+                        }
+                        @if (isQuanLy)
+                        {
+                            <a class="sidebar-nav-link @(controllerName == "SanPham" ? "active" : "")" asp-controller="SanPham" asp-action="Index">
+                                <i class="bi bi-box-seam-fill"></i>
+                                <span>Sản Phẩm</span>
+                            </a>
+                            <a class="sidebar-nav-link @(controllerName == "LoaiSP" ? "active" : "")" asp-controller="LoaiSP" asp-action="Index">
+                                <i class="bi bi-tags-fill"></i>
+                                <span>Loại Sản Phẩm</span>
+                            </a>
+                            <a class="sidebar-nav-link @(controllerName == "KhuyenMai" ? "active" : "")" asp-controller="KhuyenMai" asp-action="Index">
+                                <i class="bi bi-percent"></i>
+                                <span>Khuyến Mãi</span>
+                            </a>
+                        }
                     }
 
                     @if (canUseIngredient)

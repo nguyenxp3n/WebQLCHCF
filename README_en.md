@@ -5,9 +5,9 @@
 ![Database](https://img.shields.io/badge/SQL_Server-2022-red)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
 ![Architecture](https://img.shields.io/badge/Architecture-4--Tier%20MVC-success)
-![Automated Tests](https://img.shields.io/badge/xUnit-354%20Passed-brightgreen)
+![Automated Tests](https://img.shields.io/badge/xUnit-355%20Passed-brightgreen)
 
-> **Enterprise Coursework Project:** A production-style coffee shop point-of-sale (POS) and operations platform featuring table dispatching, inventory recipes, shift attendance with concurrency control, dynamic VietQR contactless payments, and a 354-case automated test suite.
+> **Enterprise Coursework Project:** A production-style coffee shop point-of-sale (POS) and operations platform featuring table dispatching, inventory recipes, shift attendance with concurrency control, dynamic VietQR contactless payments, and a 355-case automated test suite.
 
 ---
 
@@ -18,7 +18,7 @@ flowchart TD
     Client["Client Layer (Web Browser)\nRazor Views • Bootstrap 5 • Responsive UI • VietQR Modal"]
     
     subgraph Presentation ["Presentation & Routing Layer"]
-        Ctrl["18 MVC Controllers & Routing Engine\nAccount, Order, HoaDon, Ban, SanPham, NguyenLieu, ChamCong, Luong..."]
+        Ctrl["18 Controllers (1 BaseController + 17 Business Controllers)\nAccount, Order, HoaDon, Ban, SanPham, NguyenLieu, ChamCong, Luong..."]
         AuthFilter["Security Filters\nRoleAuthorizeAttribute • AntiForgeryToken • SessionGuard"]
     end
     
@@ -203,7 +203,7 @@ erDiagram
 4. **Isolated Business Logic Engines:**
    * Decouples calculation rules into pure domain engines: `CafeOrderCalculator`, `PayrollCalculator`, `TableWorkflowManager`, and `PasswordPolicyValidator`.
 5. **High-Coverage Automated Testing:**
-   * 354 xUnit test cases validating calculation boundaries, discount caps, shift intervals, authorization, and password entropy.
+   * 355 xUnit test cases validating calculation boundaries, discount caps, shift intervals, authorization, and password entropy.
 
 ---
 
@@ -238,5 +238,5 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 | Account | Password | Role | Permissions |
 | :--- | :--- | :--- | :--- |
 | `qly_tram` | `12345678` | **Quản Lý (Manager)** | Full management: reports, staff, payroll, promotions, audit log |
-| `pc_mai` | `12345678` | **Pha Chế (Barista)** | Recipe ingredients, inventory stock, order queue |
+| `pc_mai` | `12345678` | **Pha Chế (Barista)** | Recipe ingredients and ingredient inventory stock |
 | `pv_tu` | `12345678` | **Phục Vụ (Waiter)** | POS counter orders, table management, cash & VietQR checkout |

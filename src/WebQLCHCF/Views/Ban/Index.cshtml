@@ -165,6 +165,17 @@
                                 </td>
                                 <td class="text-end text-nowrap ban-actions-cell">
                                     <div class="ban-actions-group">
+                                        @if (!isMangVe && trangThai != "Trống")
+                                        {
+                                            <form asp-action="Restore" method="post" class="d-inline" data-no-pjax="true"
+                                                  onsubmit="return confirm('Xác nhận khách đã về và khôi phục ' + @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tenBan)) + ' về trạng thái Trống?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="maBan" value="@maBan" />
+                                                <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-1" title="Khách về - Bấm nhanh khôi phục => bàn trống">
+                                                    <i class="bi bi-arrow-repeat"></i> <span class="d-none d-xl-inline">Khôi phục</span>
+                                                </button>
+                                            </form>
+                                        }
                                         <a asp-action="Details" asp-all-route-data="R(item)" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1" title="Chi tiết">
                                             <i class="bi bi-eye-fill"></i> <span class="d-none d-xl-inline">Chi tiết</span>
                                         </a>

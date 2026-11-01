@@ -468,11 +468,11 @@ CREATE TABLE [dbo].[ThanhToan](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN01', N'Bàn 01', 1, N'Tầng trệt', N'Đang phục vụ')
-INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN02', N'Bàn 02', 2, N'Tầng trệt', N'Đang phục vụ')
-INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN03', N'Bàn 03', 3, N'Tầng trệt', N'Đang phục vụ')
-INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN04', N'Bàn 04', 4, N'Tầng lửng', N'Đang phục vụ')
-INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN05', N'Bàn 05', 5, N'Tầng lửng', N'Đang phục vụ')
+INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN01', N'Bàn 01', 1, N'Tầng trệt', N'Trống')
+INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN02', N'Bàn 02', 2, N'Tầng trệt', N'Trống')
+INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN03', N'Bàn 03', 3, N'Tầng trệt', N'Trống')
+INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN04', N'Bàn 04', 4, N'Tầng lửng', N'Trống')
+INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'BAN05', N'Bàn 05', 5, N'Tầng lửng', N'Trống')
 INSERT [dbo].[Ban] ([MaBan], [TenBan], [SoBan], [KhuVuc], [TrangThai]) VALUES (N'MVE', N'Mang về', NULL, N'Mang về', N'Trống')
 GO
 SET IDENTITY_INSERT [dbo].[ChamCong] ON 
@@ -482,7 +482,7 @@ INSERT [dbo].[ChamCong] ([MaCC], [MaNV], [ThoiGianCheckIn], [ThoiGianCheckOut], 
 INSERT [dbo].[ChamCong] ([MaCC], [MaNV], [ThoiGianCheckIn], [ThoiGianCheckOut], [TrangThai], [GhiChu], [DonGiaGio], [TongPhut], [TongGio], [TienCong]) VALUES (3, N'NV01', CAST(N'2026-05-28T21:45:44.0000000' AS DateTime2), CAST(N'2026-05-28T21:47:14.0000000' AS DateTime2), N'Đã checkout', N'Tự động check-in khi đăng nhập', 30000.0000, 2, CAST(0.03 AS Decimal(10, 2)), 1000.0000)
 INSERT [dbo].[ChamCong] ([MaCC], [MaNV], [ThoiGianCheckIn], [ThoiGianCheckOut], [TrangThai], [GhiChu], [DonGiaGio], [TongPhut], [TongGio], [TienCong]) VALUES (4, N'NV01', CAST(N'2026-05-28T21:50:02.0000000' AS DateTime2), CAST(N'2026-05-28T21:50:04.0000000' AS DateTime2), N'Đã checkout', N'Tự động check-in khi đăng nhập', 30000.0000, 0, CAST(0.00 AS Decimal(10, 2)), 0.0000)
 INSERT [dbo].[ChamCong] ([MaCC], [MaNV], [ThoiGianCheckIn], [ThoiGianCheckOut], [TrangThai], [GhiChu], [DonGiaGio], [TongPhut], [TongGio], [TienCong]) VALUES (5, N'NV01', CAST(N'2026-05-28T21:51:26.0000000' AS DateTime2), CAST(N'2026-05-29T23:31:23.0000000' AS DateTime2), N'Đã checkout', N'Tự động check-in khi đăng nhập', 30000.0000, 1540, CAST(25.67 AS Decimal(10, 2)), 770000.0000)
-INSERT [dbo].[ChamCong] ([MaCC], [MaNV], [ThoiGianCheckIn], [ThoiGianCheckOut], [TrangThai], [GhiChu], [DonGiaGio], [TongPhut], [TongGio], [TienCong]) VALUES (6, N'NV01', CAST(N'2026-05-29T23:31:38.0000000' AS DateTime2), NULL, N'Đang làm', N'Tự động check-in khi đăng nhập', 30000.0000, NULL, NULL, NULL)
+INSERT [dbo].[ChamCong] ([MaCC], [MaNV], [ThoiGianCheckIn], [ThoiGianCheckOut], [TrangThai], [GhiChu], [DonGiaGio], [TongPhut], [TongGio], [TienCong]) VALUES (6, N'NV01', CAST(N'2026-05-29T23:31:38.0000000' AS DateTime2), CAST(N'2026-05-30T03:31:38.0000000' AS DateTime2), N'Đã checkout', N'Tự động check-in khi đăng nhập', 30000.0000, 240, CAST(4.00 AS Decimal(10, 2)), 120000.0000)
 SET IDENTITY_INSERT [dbo].[ChamCong] OFF
 GO
 INSERT [dbo].[CongThuc] ([MaSP], [MaNL], [DinhLuong]) VALUES (N'SP01', N'NL01', CAST(9.000 AS Decimal(18, 3)))
@@ -540,7 +540,7 @@ INSERT [dbo].[HoaDon] ([MaHD], [NgayLap], [MaNV], [MaKH], [TongTien], [GhiChu], 
 INSERT [dbo].[HoaDon] ([MaHD], [NgayLap], [MaNV], [MaKH], [TongTien], [GhiChu], [MaBan], [TrangThaiOrder], [TrangThaiThanhToan], [PhuongThucThanhToan], [ThoiGianTao], [ThoiGianThanhToan]) VALUES (N'260530011', CAST(N'2026-05-30' AS Date), N'NV01', NULL, 28000.0000, NULL, N'BAN01', N'HoanThanh', N'DaThanhToan', N'TienMat', CAST(N'2026-05-30T09:54:06.0000000' AS DateTime2), CAST(N'2026-05-30T09:54:09.0000000' AS DateTime2))
 INSERT [dbo].[HoaDon] ([MaHD], [NgayLap], [MaNV], [MaKH], [TongTien], [GhiChu], [MaBan], [TrangThaiOrder], [TrangThaiThanhToan], [PhuongThucThanhToan], [ThoiGianTao], [ThoiGianThanhToan]) VALUES (N'260530012', CAST(N'2026-05-30' AS Date), N'NV01', NULL, 28000.0000, NULL, N'BAN02', N'HoanThanh', N'DaThanhToan', N'QR', CAST(N'2026-05-30T09:55:10.0000000' AS DateTime2), CAST(N'2026-05-30T09:55:18.0000000' AS DateTime2))
 INSERT [dbo].[HoaDon] ([MaHD], [NgayLap], [MaNV], [MaKH], [TongTien], [GhiChu], [MaBan], [TrangThaiOrder], [TrangThaiThanhToan], [PhuongThucThanhToan], [ThoiGianTao], [ThoiGianThanhToan]) VALUES (N'260530013', CAST(N'2026-05-30' AS Date), N'NV01', NULL, 280000.0000, NULL, N'BAN03', N'HoanThanh', N'DaThanhToan', N'TienMat', CAST(N'2026-05-30T11:11:04.0000000' AS DateTime2), CAST(N'2026-05-30T11:11:14.0000000' AS DateTime2))
-INSERT [dbo].[HoaDon] ([MaHD], [NgayLap], [MaNV], [MaKH], [TongTien], [GhiChu], [MaBan], [TrangThaiOrder], [TrangThaiThanhToan], [PhuongThucThanhToan], [ThoiGianTao], [ThoiGianThanhToan]) VALUES (N'260530014', CAST(N'2026-05-30' AS Date), N'NV01', NULL, 60000.0000, NULL, N'BAN03', N'DangOrder', N'ChuaThanhToan', NULL, CAST(N'2026-05-30T11:11:45.0000000' AS DateTime2), NULL)
+INSERT [dbo].[HoaDon] ([MaHD], [NgayLap], [MaNV], [MaKH], [TongTien], [GhiChu], [MaBan], [TrangThaiOrder], [TrangThaiThanhToan], [PhuongThucThanhToan], [ThoiGianTao], [ThoiGianThanhToan]) VALUES (N'260530014', CAST(N'2026-05-30' AS Date), N'NV01', NULL, 60000.0000, NULL, N'BAN03', N'HoanThanh', N'DaThanhToan', N'TienMat', CAST(N'2026-05-30T11:11:45.0000000' AS DateTime2), CAST(N'2026-05-30T11:12:00.0000000' AS DateTime2))
 GO
 INSERT [dbo].[KhachHang] ([MaKH], [TenKH], [SDT], [DiemTichLuy]) VALUES (N'KH01', N'Lê Thị Hồng', N'0901111001', 5)
 INSERT [dbo].[KhachHang] ([MaKH], [TenKH], [SDT], [DiemTichLuy]) VALUES (N'KH02', N'Nguyễn Văn Dũng', N'0901111002', 0)

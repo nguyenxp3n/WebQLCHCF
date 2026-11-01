@@ -24,6 +24,19 @@ public class InvoiceImmutabilityTests
     }
 
     [Fact]
+    public void CanEditOrder_HoaDonDangChoThanhToanQR_TuChoiChinhSua()
+    {
+        bool canEdit = TableWorkflowManager.CanEditOrder(
+            OrderWorkflowConstants.TrangThaiOrderDangOrder,
+            OrderWorkflowConstants.TrangThaiThanhToanChoThanhToanQr,
+            out string? reason
+        );
+
+        Assert.False(canEdit);
+        Assert.Equal("Hóa đơn đang chờ thanh toán QR, không thể sửa.", reason);
+    }
+
+    [Fact]
     public void CanEditOrder_HoaDonDaThanhToan_TuChoiChinhSua()
     {
         bool canEdit = TableWorkflowManager.CanEditOrder(

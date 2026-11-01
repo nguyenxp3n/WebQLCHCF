@@ -5,7 +5,7 @@
 ![Database](https://img.shields.io/badge/SQL_Server-2022-red)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
 ![Architecture](https://img.shields.io/badge/Architecture-4--Tier%20MVC-success)
-![Automated Tests](https://img.shields.io/badge/xUnit-354%20Passed-brightgreen)
+![Automated Tests](https://img.shields.io/badge/xUnit-355%20Passed-brightgreen)
 
 > **Dự án thực hành chuyên sâu:** Xây dựng hệ thống quản lý bán hàng tại quầy (POS), điều phối bàn thời gian thực, quản lý kho nguyên liệu theo định lượng công thức, chấm công tự động theo ca và tích hợp thanh toán mã động VietQR.
 
@@ -18,7 +18,7 @@ flowchart TD
     Client["Client Layer (Trình duyệt Web)\nRazor Views • Bootstrap 5 • Responsive UI • VietQR Modal"]
     
     subgraph Presentation ["Presentation & Routing Layer"]
-        Ctrl["18 MVC Controllers & Routing Engine\nAccount, Order, HoaDon, Ban, SanPham, NguyenLieu, ChamCong, Luong..."]
+        Ctrl["18 Controllers (1 BaseController + 17 Business Controllers)\nAccount, Order, HoaDon, Ban, SanPham, NguyenLieu, ChamCong, Luong..."]
         AuthFilter["Security Filters\nRoleAuthorizeAttribute • AntiForgeryToken • SessionGuard"]
     end
     
@@ -207,7 +207,7 @@ erDiagram
    * Tách logic tính giá tiền, khấu trừ khuyến mãi và tích lũy điểm thưởng thành `CafeOrderCalculator`.
    * Tách tính giờ làm và lương ca thành `PayrollCalculator`.
 5. **Kiểm thử tự động đa tầng (Automated Testing Suite):**
-   * Bộ kiểm thử xUnit với **354 test cases** bao phủ toàn bộ các trường hợp biên: đơn giá âm, số lượng = 0, chiết khấu vượt quá 100%, ca làm qua đêm, độ phức tạp mật khẩu và kiểm tra phân quyền.
+   * Bộ kiểm thử xUnit với **355 test cases** bao phủ toàn bộ các trường hợp biên: đơn giá âm, số lượng = 0, chiết khấu vượt quá 100%, ca làm qua đêm, độ phức tạp mật khẩu và kiểm tra phân quyền.
 
 ---
 
@@ -266,21 +266,21 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 | Tài khoản | Mật khẩu | Nhân viên | Vai trò | Quyền hạn chính |
 | :--- | :--- | :--- | :--- | :--- |
 | `qly_tram` | `12345678` | NV01 (Khánh Trâm) | **Quản Lý** | Toàn quyền: Thống kê, Báo cáo, Nhân sự, Lương, Khuyến mãi, Audit Log |
-| `pc_mai` | `12345678` | NV02 (Thanh Mai) | **Pha Chế** | Quản lý định lượng nguyên liệu, xem đơn chế biến |
+| `pc_mai` | `12345678` | NV02 (Thanh Mai) | **Pha Chế** | Quản lý định lượng và theo dõi tồn kho nguyên liệu pha chế |
 | `pv_tu` | `12345678` | NV04 (Thanh Tú) | **Phục Vụ** | Lập order tại quầy, quản lý bàn, thu tiền mặt & kích hoạt VietQR |
 
 ---
 
 ## 6. Bộ Kiểm Thử Tự Động & Tiêu Chuẩn Chất Lượng (QA Standards)
 
-* **Bộ kiểm thử tự động xUnit**: **354/354 test cases Passed 100%** (Thời gian chạy: ~48ms).
+* **Bộ kiểm thử tự động xUnit**: **355/355 test cases Passed 100%** (Thời gian chạy: ~48ms).
 * **Độ bao phủ kiểm thử**:
-  * **Kiểm thử kiến trúc Reflection (`SecurityArchitectureTests`)**: Quét toàn bộ 18 Controller trong assembly, bảo đảm 100% Controller có thuộc tính `[RoleAuthorize]` (hoặc `[AllowAnonymous]`), action đọc có `[HttpGet]`, và action POST có `[ValidateAntiForgeryToken]`.
+  * **Kiểm thử kiến trúc Reflection (`SecurityArchitectureTests`)**: Quét toàn bộ Controller trong assembly (1 BaseController trừu tượng + 17 Controller nghiệp vụ), bảo đảm 100% Controller có thuộc tính `[RoleAuthorize]` (hoặc `[AllowAnonymous]`), action đọc có `[HttpGet]`, và action POST có `[ValidateAntiForgeryToken]`.
   * **Tính bất biến hóa đơn (`InvoiceImmutabilityTests`)**: Bảo vệ hóa đơn đã thanh toán (`DaThanhToan`) không thể bị sửa, thêm hoặc xóa dòng món.
   * **Quy trình điểm thưởng (`LoyaltyPointsWorkflowTests`)**: Xác nhận điểm thưởng chỉ được tích khi thanh toán hoàn tất và tự động hoàn trả khi hủy đơn.
   * **Ràng buộc khuyến mãi (`PromotionDateValidationTests`)**: Kiểm tra biên ngày bắt đầu và kết thúc.
   * **Tính lương chính xác theo phút (`PayrollPrecisionTests`)**: Khử hoàn toàn độ lệch làm tròn tiền lương giữa C# và SQL Server qua 2.400 phút mô phỏng.
   * **Kiểm thử đối kháng (`ChallengerM2EmpiricalTests`)**: Thử nghiệm tấn công vượt quyền và kiểm tra khóa bi quan chống race condition.
   * **Bảo mật & Mã hóa mật khẩu (`PasswordHasherServiceTests`, `AccountSecurityIntegrationTests`)**: Kiểm tra thuật toán PBKDF2 (HMAC-SHA512/256 + 100.000 iterations), cơ chế tương thích ngược và tự động rehash mật khẩu cũ khi đăng nhập.
-  * **Kiểm thử tích hợp CSDL SQL Server (`SqlServerIntegrationTests`)**: Kiểm tra toàn vẹn mô hình 17 thực thể, khóa chính, ràng buộc và khả năng kết nối SQL Server thực tế.
+  * **Kiểm thử mô hình CSDL và kết nối SQL Server (`SqlServerIntegrationTests`)**: Kiểm tra toàn vẹn ánh xạ 17 thực thể domain, khóa chính, quan hệ ràng buộc qua EF Core metadata và kiểm tra kết nối SQL Server khi môi trường kiểm thử có database khả dụng.
 * **Đường ống CI/CD**: Tự động hóa hoàn toàn với GitHub Actions, build và test trên môi trường Ubuntu container mỗi lần push hoặc tạo PR.
