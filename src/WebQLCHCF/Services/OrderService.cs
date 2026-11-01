@@ -63,7 +63,7 @@ public class OrderService : IOrderService
             MaKH = hoaDon.MaKH,
             TenKH = customer?.TenKH,
             SDTKhachHang = customer?.SDT,
-            GhiChu = hoaDon.GhiChu,
+            GhiChu = StripRequestToken(hoaDon.GhiChu),
         });
 
         var detailMap = await _context.CTHDResults
@@ -213,20 +213,22 @@ public class OrderService : IOrderService
             maKh = customerExists ? model.MaKH : null;
         }
 
-        string? targetMaHD = null;
+        var requestId = !string.IsNullOrWhiteSpace(model.ClientRequestId)
+            ? model.ClientRequestId.Trim()
+            : Guid.NewGuid().ToString("N")[..12];
+        var tokenTag = $"[req:{requestId}]";
+        var noteWithToken = BuildGhiChuWithToken(model.GhiChu, requestId);
+
         var strategy = _context.Database.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
         {
-            // Idempotency guard: If this delegate is retried after a transient connection failure on commit,
-            // check if the targeted invoice was already created and committed successfully.
-            if (!string.IsNullOrWhiteSpace(targetMaHD))
+            // Exact Idempotency Verification: Check if an invoice with THIS specific request token was already committed.
+            // This prevents duplicate orders on retry, and NEVER incorrectly picks up another concurrent request's invoice.
+            var committedInvoice = await _context.HoaDons.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.GhiChu != null && x.GhiChu.Contains(tokenTag));
+            if (committedInvoice != null)
             {
-                var existing = await _context.HoaDons.AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.MaHD == targetMaHD);
-                if (existing != null)
-                {
-                    return existing.MaHD;
-                }
+                return committedInvoice.MaHD;
             }
 
             await using var tx = await _context.Database.BeginTransactionAsync();
@@ -234,31 +236,27 @@ public class OrderService : IOrderService
             {
                 var maBan = await ResolveTableAsync(model);
 
-                // Concurrency & Idempotency: Acquire range lock via UPDLOCK, HOLDLOCK so concurrent orders get sequential numbers
-                if (string.IsNullOrWhiteSpace(targetMaHD))
+                // Concurrency & Sequence: Lock range using UPDLOCK, HOLDLOCK so concurrent requests get sequential numbers
+                string maHD;
+                if (_context.Database.IsRelational())
                 {
-                    if (_context.Database.IsRelational())
-                    {
-                        var prefix = DateTime.Today.ToString("yyMMdd");
-                        var maxNumber = await _context.Database
-                            .SqlQueryRaw<int?>("SELECT MAX(TRY_CONVERT(int, RIGHT(MaHD, 3))) AS Value FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK) WHERE MaHD LIKE {0}", prefix + "%")
-                            .FirstOrDefaultAsync() ?? 0;
-                        targetMaHD = $"{prefix}{(maxNumber + 1):D3}";
-                    }
-                    else
-                    {
-                        targetMaHD = await NextCodeHelper.NextHoaDonAsync(
-                            _context.HoaDons.Select(x => x.MaHD),
-                            DateTime.Today
-                        );
-                    }
+                    var prefix = DateTime.Today.ToString("yyMMdd");
+                    var maxNumber = await _context.Database
+                        .SqlQueryRaw<int?>("SELECT MAX(TRY_CONVERT(int, RIGHT(MaHD, 3))) AS Value FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK) WHERE MaHD LIKE {0}", prefix + "%")
+                        .FirstOrDefaultAsync() ?? 0;
+                    maHD = $"{prefix}{(maxNumber + 1):D3}";
+                }
+                else
+                {
+                    maHD = await NextCodeHelper.NextHoaDonAsync(
+                        _context.HoaDons.Select(x => x.MaHD),
+                        DateTime.Today
+                    );
                 }
 
                 await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC HoaDon_Them {targetMaHD}, {DateTime.Today}, {maNV}, {maKh}, {model.GhiChu}, {maBan}"
+                    $"EXEC HoaDon_Them {maHD}, {DateTime.Today}, {maNV}, {maKh}, {noteWithToken}, {maBan}"
                 );
-
-                var maHD = targetMaHD;
 
                 foreach (var item in orderItems)
                 {
@@ -458,7 +456,7 @@ public class OrderService : IOrderService
                 ? OrderWorkflowConstants.HinhThucMangVe
                 : OrderWorkflowConstants.HinhThucTaiQuan,
             TongTien = header.TongTien,
-            GhiChu = header.GhiChu,
+            GhiChu = StripRequestToken(header.GhiChu),
             DiemDaCong = customer == null
                 ? null
                 : (trangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan
@@ -778,6 +776,32 @@ public class OrderService : IOrderService
         var result = await ExecutePaymentProcedureAsync("Ban_KhachDi", ("@MaBan", maBan));
         if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
             throw new InvalidOperationException(result.Message);
+    }
+
+    public static string StripRequestToken(string? ghiChu)
+    {
+        if (string.IsNullOrWhiteSpace(ghiChu))
+            return string.Empty;
+
+        var tokenIndex = ghiChu.IndexOf("[req:", StringComparison.OrdinalIgnoreCase);
+        if (tokenIndex < 0)
+            return ghiChu.Trim();
+
+        return ghiChu[..tokenIndex].Trim();
+    }
+
+    public static string BuildGhiChuWithToken(string? userNote, string requestId)
+    {
+        var tokenTag = $"[req:{requestId}]";
+        if (string.IsNullOrWhiteSpace(userNote))
+            return tokenTag;
+
+        var clean = StripRequestToken(userNote);
+        var maxUserLength = 100 - tokenTag.Length - 1;
+        if (clean.Length > maxUserLength)
+            clean = clean[..maxUserLength];
+
+        return $"{clean} {tokenTag}".Trim();
     }
 
     private static bool IsPayable(string trangThaiOrder, string trangThaiThanhToan) =>

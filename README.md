@@ -5,10 +5,10 @@
 ![Database](https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)
 ![Architecture](https://img.shields.io/badge/Architecture-4--Tier%20MVC-success)
-![Automated Tests](https://img.shields.io/badge/xUnit-355%20Passed-brightgreen?logo=xunit)
+![Automated Tests](https://img.shields.io/badge/xUnit-358%20Passed-brightgreen?logo=xunit)
 ![Security](https://img.shields.io/badge/Security-PBKDF2%20%7C%20RBAC%20%7C%20Anti--CSRF-orange)
 
-> **WebQLCHCF** là giải pháp phần mềm quản lý toàn diện dành cho chuỗi quán cà phê và điểm bán lẻ ẩm thực (F&B). Dự án được thiết kế chuẩn mực theo kiến trúc **4-Tier Clean MVC** trên nền tảng **.NET 10 (C# 14)** kết hợp **Entity Framework Core 10** và **SQL Server 2022 Enterprise**, đóng gói hoàn chỉnh bằng **Docker Compose** và xác thực chất lượng với **355 ca kiểm thử tự động (xUnit)**.
+> **WebQLCHCF** là giải pháp phần mềm quản lý toàn diện dành cho chuỗi quán cà phê và điểm bán lẻ ẩm thực (F&B). Dự án được thiết kế chuẩn mực theo kiến trúc **4-Tier Clean MVC** trên nền tảng **.NET 10 (C# 14)** kết hợp **Entity Framework Core 10** và **SQL Server 2022 Enterprise**, đóng gói hoàn chỉnh bằng **Docker Compose** và xác thực chất lượng với **358 ca kiểm thử tự động (xUnit)**.
 
 ---
 
@@ -320,11 +320,11 @@ erDiagram
 ## 7. Bộ Kiểm Thử Tự Động (Automated Testing Suite)
 
 Dự án sở hữu bộ kiểm thử tự động toàn diện được tích hợp vào đường ống CI/CD:
-* **Tổng số ca kiểm thử:** **355/355 test cases đạt 100% Passed** (Thời gian chạy: ~3 giây).
+* **Tổng số ca kiểm thử:** **358/358 test cases đạt 100% Passed** (Thời gian chạy: ~2 giây).
 * **Khung kiểm thử:** xUnit, FluentAssertions, ASP.NET Core Test Harness.
 
 ```text
-Passed!  - Failed: 0, Passed: 355, Skipped: 0, Total: 355, Duration: 3 s - WebQLCHCF.Tests.dll
+Passed!  - Failed: 0, Passed: 358, Skipped: 0, Total: 358, Duration: 2 s - WebQLCHCF.Tests.dll
 ```
 
 ### Các nhóm kiểm thử chuyên sâu:
@@ -409,5 +409,5 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 * **Dự án:** Web Quản Lý Cửa Hàng Cà Phê (WebQLCHCF)
 * **Mã nguồn:** [https://github.com/nguyenxp3n/WebQLCHCF](https://github.com/nguyenxp3n/WebQLCHCF)
 * **Ngôn ngữ & Nền tảng:** C# 14 / .NET 10 / ASP.NET Core MVC / EF Core 10 / SQL Server 2022
-* **Kiểm thử:** xUnit (355 Unit & Integration Tests)
+* **Kiểm thử:** xUnit (358 Unit & Integration Tests)
 * **Bản quyền:** Mã nguồn phục vụ mục đích học tập, nghiên cứu và chứng minh năng lực kỹ thuật trên CV cá nhân.

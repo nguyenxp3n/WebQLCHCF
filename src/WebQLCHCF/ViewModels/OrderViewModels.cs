@@ -4,6 +4,7 @@ public class OrderCreateViewModel
 {
     public string? EditMaHD { get; set; }
     public bool IsEditing => !string.IsNullOrWhiteSpace(EditMaHD);
+    public string? ClientRequestId { get; set; }
     public string HinhThuc { get; set; } = "TaiQuan";
     public string KhuVuc { get; set; } = "Tầng trệt";
     public string? MaKH { get; set; }

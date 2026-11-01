@@ -704,4 +704,36 @@ public class DomainModelValidationTests
         Assert.Contains(errors, e => e.MemberNames.Contains(nameof(ThanhToan.TrangThai)));
     }
     #endregion
+
+    #region 18. Order Idempotency Token Tests
+    [Fact]
+    public void BuildGhiChuWithToken_EmbedsTokenAndEnforcesLengthLimit()
+    {
+        var note = "Ít đường, không đá";
+        var requestId = "req_123456789abc";
+        var result = WebQLCHCF.Services.OrderService.BuildGhiChuWithToken(note, requestId);
+
+        Assert.Contains("[req:req_123456789abc]", result);
+        Assert.StartsWith("Ít đường, không đá", result);
+        Assert.True(result.Length <= 100);
+    }
+
+    [Fact]
+    public void StripRequestToken_RemovesTokenCleanlyForCustomerView()
+    {
+        var noteWithToken = "Ít đường, không đá [req:req_123456789abc]";
+        var stripped = WebQLCHCF.Services.OrderService.StripRequestToken(noteWithToken);
+
+        Assert.Equal("Ít đường, không đá", stripped);
+    }
+
+    [Fact]
+    public void StripRequestToken_WhenNoTokenPresent_ReturnsOriginalTrimmed()
+    {
+        var normalNote = "   Bàn gần cửa sổ   ";
+        var stripped = WebQLCHCF.Services.OrderService.StripRequestToken(normalNote);
+
+        Assert.Equal("Bàn gần cửa sổ", stripped);
+    }
+    #endregion
 }
