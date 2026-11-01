@@ -11,7 +11,7 @@ public class TaiKhoan
     [Required, StringLength(50)]
     public string TenDangNhap { get; set; } = string.Empty;
 
-    [Required, StringLength(50), DataType(DataType.Password)]
+    [Required, StringLength(255), DataType(DataType.Password)]
     public string MatKhau { get; set; } = string.Empty;
 
     [Required, StringLength(5)]

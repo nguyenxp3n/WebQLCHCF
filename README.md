@@ -5,7 +5,7 @@
 ![Database](https://img.shields.io/badge/SQL_Server-2022-red)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
 ![Architecture](https://img.shields.io/badge/Architecture-4--Tier%20MVC-success)
-![Automated Tests](https://img.shields.io/badge/xUnit-335%20Passed-brightgreen)
+![Automated Tests](https://img.shields.io/badge/xUnit-354%20Passed-brightgreen)
 
 > **Dự án thực hành chuyên sâu:** Xây dựng hệ thống quản lý bán hàng tại quầy (POS), điều phối bàn thời gian thực, quản lý kho nguyên liệu theo định lượng công thức, chấm công tự động theo ca và tích hợp thanh toán mã động VietQR.
 
@@ -26,7 +26,7 @@ flowchart TD
         OrderCalc["CafeOrderCalculator\nTính thành tiền, chiết khấu phần trăm/tiền mặt, điểm thưởng, VietQR URL"]
         PayrollCalc["PayrollCalculator\nTính số phút, quy đổi giờ làm việc và tiền công ca làm"]
         TableWF["TableWorkflowManager\nChuyển đổi trạng thái bàn, kiểm tra tính khả dụng & hủy đơn"]
-        PassPolicy["PasswordPolicyValidator\nThẩm định độ phức tạp mật khẩu"]
+        PassPolicy["PasswordPolicyValidator & PasswordHasher\nThẩm định độ phức tạp & PBKDF2 Hashing (HMAC-SHA512)"]
         Services["Core Services\nOrderService • ChamCongService • DashboardService • AuditLogService"]
     end
     
@@ -207,7 +207,7 @@ erDiagram
    * Tách logic tính giá tiền, khấu trừ khuyến mãi và tích lũy điểm thưởng thành `CafeOrderCalculator`.
    * Tách tính giờ làm và lương ca thành `PayrollCalculator`.
 5. **Kiểm thử tự động đa tầng (Automated Testing Suite):**
-   * Bộ kiểm thử xUnit với **335 test cases** bao phủ toàn bộ các trường hợp biên: đơn giá âm, số lượng = 0, chiết khấu vượt quá 100%, ca làm qua đêm, độ phức tạp mật khẩu và kiểm tra phân quyền.
+   * Bộ kiểm thử xUnit với **354 test cases** bao phủ toàn bộ các trường hợp biên: đơn giá âm, số lượng = 0, chiết khấu vượt quá 100%, ca làm qua đêm, độ phức tạp mật khẩu và kiểm tra phân quyền.
 
 ---
 
@@ -273,7 +273,7 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 
 ## 6. Bộ Kiểm Thử Tự Động & Tiêu Chuẩn Chất Lượng (QA Standards)
 
-* **Bộ kiểm thử tự động xUnit**: **335/335 test cases Passed 100%** (Thời gian chạy: ~48ms).
+* **Bộ kiểm thử tự động xUnit**: **354/354 test cases Passed 100%** (Thời gian chạy: ~48ms).
 * **Độ bao phủ kiểm thử**:
   * **Kiểm thử kiến trúc Reflection (`SecurityArchitectureTests`)**: Quét toàn bộ 18 Controller trong assembly, bảo đảm 100% Controller có thuộc tính `[RoleAuthorize]` (hoặc `[AllowAnonymous]`), action đọc có `[HttpGet]`, và action POST có `[ValidateAntiForgeryToken]`.
   * **Tính bất biến hóa đơn (`InvoiceImmutabilityTests`)**: Bảo vệ hóa đơn đã thanh toán (`DaThanhToan`) không thể bị sửa, thêm hoặc xóa dòng món.
@@ -281,4 +281,6 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
   * **Ràng buộc khuyến mãi (`PromotionDateValidationTests`)**: Kiểm tra biên ngày bắt đầu và kết thúc.
   * **Tính lương chính xác theo phút (`PayrollPrecisionTests`)**: Khử hoàn toàn độ lệch làm tròn tiền lương giữa C# và SQL Server qua 2.400 phút mô phỏng.
   * **Kiểm thử đối kháng (`ChallengerM2EmpiricalTests`)**: Thử nghiệm tấn công vượt quyền và kiểm tra khóa bi quan chống race condition.
+  * **Bảo mật & Mã hóa mật khẩu (`PasswordHasherServiceTests`, `AccountSecurityIntegrationTests`)**: Kiểm tra thuật toán PBKDF2 (HMAC-SHA512/256 + 100.000 iterations), cơ chế tương thích ngược và tự động rehash mật khẩu cũ khi đăng nhập.
+  * **Kiểm thử tích hợp CSDL SQL Server (`SqlServerIntegrationTests`)**: Kiểm tra toàn vẹn mô hình 17 thực thể, khóa chính, ràng buộc và khả năng kết nối SQL Server thực tế.
 * **Đường ống CI/CD**: Tự động hóa hoàn toàn với GitHub Actions, build và test trên môi trường Ubuntu container mỗi lần push hoặc tạo PR.

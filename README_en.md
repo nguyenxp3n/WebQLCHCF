@@ -5,9 +5,9 @@
 ![Database](https://img.shields.io/badge/SQL_Server-2022-red)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
 ![Architecture](https://img.shields.io/badge/Architecture-4--Tier%20MVC-success)
-![Automated Tests](https://img.shields.io/badge/xUnit-335%20Passed-brightgreen)
+![Automated Tests](https://img.shields.io/badge/xUnit-354%20Passed-brightgreen)
 
-> **Enterprise Coursework Project:** A production-style coffee shop point-of-sale (POS) and operations platform featuring table dispatching, inventory recipes, shift attendance with concurrency control, dynamic VietQR contactless payments, and a 181-case automated test suite.
+> **Enterprise Coursework Project:** A production-style coffee shop point-of-sale (POS) and operations platform featuring table dispatching, inventory recipes, shift attendance with concurrency control, dynamic VietQR contactless payments, and a 354-case automated test suite.
 
 ---
 
@@ -26,7 +26,7 @@ flowchart TD
         OrderCalc["CafeOrderCalculator\nItem totals, percentage/cash discount calculations, loyalty points, VietQR URLs"]
         PayrollCalc["PayrollCalculator\nShift minute calculation, decimal hour conversion, and wage summation"]
         TableWF["TableWorkflowManager\nTable state transitions, availability guards, and cancellation rules"]
-        PassPolicy["PasswordPolicyValidator\nPassword complexity policy enforcement"]
+        PassPolicy["PasswordPolicyValidator & PasswordHasher\nPassword complexity & PBKDF2 Hashing (HMAC-SHA512)"]
         Services["Core Services\nOrderService • ChamCongService • DashboardService • AuditLogService"]
     end
     
@@ -203,7 +203,7 @@ erDiagram
 4. **Isolated Business Logic Engines:**
    * Decouples calculation rules into pure domain engines: `CafeOrderCalculator`, `PayrollCalculator`, `TableWorkflowManager`, and `PasswordPolicyValidator`.
 5. **High-Coverage Automated Testing:**
-   * 77 xUnit test cases validating calculation boundaries, discount caps, shift intervals, authorization, and password entropy.
+   * 354 xUnit test cases validating calculation boundaries, discount caps, shift intervals, authorization, and password entropy.
 
 ---
 

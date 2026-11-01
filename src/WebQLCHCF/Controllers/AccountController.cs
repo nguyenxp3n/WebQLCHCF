@@ -14,16 +14,19 @@ public class AccountController : Controller
     private readonly AppDbContext _context;
     private readonly IChamCongService _chamCongService;
     private readonly IAuditLogService _auditLogService;
+    private readonly IPasswordHasherService _passwordHasherService;
 
     public AccountController(
         AppDbContext context,
         IChamCongService chamCongService,
-        IAuditLogService auditLogService
+        IAuditLogService auditLogService,
+        IPasswordHasherService? passwordHasherService = null
     )
     {
         _context = context;
         _chamCongService = chamCongService;
         _auditLogService = auditLogService;
+        _passwordHasherService = passwordHasherService ?? new PasswordHasherService();
     }
 
     [HttpGet]
@@ -51,32 +54,41 @@ public class AccountController : Controller
 
         try
         {
-            var user = (
-                await _context
-                    .LoginResults.FromSqlInterpolated(
-                        $"EXEC TaiKhoan_DangNhap {model.TenDangNhap}, {model.MatKhau}"
-                    )
-                    .AsNoTracking()
-                    .ToListAsync()
-            ).FirstOrDefault();
+            var account = await _context.TaiKhoans.FirstOrDefaultAsync(x => x.TenDangNhap == model.TenDangNhap);
 
-            if (user == null)
+            if (account == null)
             {
                 ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
                 return View(model);
             }
 
-            HttpContext.Session.SetString("MaTK", user.MaTK);
-            HttpContext.Session.SetString("TenDangNhap", user.TenDangNhap);
-            HttpContext.Session.SetString("MaNV", user.MaNV);
-            HttpContext.Session.SetString("TenNV", user.TenNV);
-            HttpContext.Session.SetString("VaiTro", user.VaiTro);
+            var (verified, needsRehash) = _passwordHasherService.VerifyHashedPassword(account, account.MatKhau, model.MatKhau);
+            if (!verified)
+            {
+                ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
+                return View(model);
+            }
 
-            await _chamCongService.AutoCheckInOnLoginAsync(user.MaNV);
+            if (needsRehash)
+            {
+                account.MatKhau = _passwordHasherService.HashPassword(account, model.MatKhau);
+                await _context.SaveChangesAsync();
+            }
+
+            var nhanVien = await _context.NhanViens.AsNoTracking().FirstOrDefaultAsync(x => x.MaNV == account.MaNV);
+            var tenNV = nhanVien?.TenNV ?? account.TenDangNhap;
+
+            HttpContext.Session.SetString("MaTK", account.MaTK);
+            HttpContext.Session.SetString("TenDangNhap", account.TenDangNhap);
+            HttpContext.Session.SetString("MaNV", account.MaNV);
+            HttpContext.Session.SetString("TenNV", tenNV);
+            HttpContext.Session.SetString("VaiTro", account.VaiTro);
+
+            await _chamCongService.AutoCheckInOnLoginAsync(account.MaNV);
 
             TempData.Remove("Error");
             TempData["Success"] = "Đăng nhập thành công.";
-            return RedirectAfterLogin(user.VaiTro);
+            return RedirectAfterLogin(account.VaiTro);
         }
         catch
         {
@@ -219,13 +231,14 @@ public class AccountController : Controller
             return View(model);
         }
 
-        if (!string.Equals(account.MatKhau, model.MatKhauHienTai, StringComparison.Ordinal))
+        var (verified, _) = _passwordHasherService.VerifyHashedPassword(account, account.MatKhau, model.MatKhauHienTai);
+        if (!verified)
         {
             ModelState.AddModelError(nameof(model.MatKhauHienTai), "Mật khẩu hiện tại không đúng.");
             return View(model);
         }
 
-        account.MatKhau = model.MatKhauMoi;
+        account.MatKhau = _passwordHasherService.HashPassword(account, model.MatKhauMoi);
         await _context.SaveChangesAsync();
 
         await _auditLogService.LogAsync(

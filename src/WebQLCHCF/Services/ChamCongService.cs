@@ -1,3 +1,4 @@
+using WebQLCHCF.Security;
 using Microsoft.EntityFrameworkCore;
 using WebQLCHCF.Data;
 using WebQLCHCF.ViewModels;
@@ -10,8 +11,13 @@ public class ChamCongService : IChamCongService
     private const string TrangThaiDangLam = "Đang làm";
 
     private readonly AppDbContext _context;
+    private readonly IPasswordHasherService _passwordHasherService;
 
-    public ChamCongService(AppDbContext context) => _context = context;
+    public ChamCongService(AppDbContext context, IPasswordHasherService? passwordHasherService = null)
+    {
+        _context = context;
+        _passwordHasherService = passwordHasherService ?? new PasswordHasherService();
+    }
 
     public async Task AutoCheckInOnLoginAsync(string maNV)
     {
@@ -95,8 +101,22 @@ public class ChamCongService : IChamCongService
         if (string.IsNullOrWhiteSpace(matKhau))
             throw new InvalidOperationException("Vui lòng nhập mật khẩu.");
 
+        var account = await _context.TaiKhoans.FirstOrDefaultAsync(x => x.MaNV == maNV);
+        if (account == null)
+            throw new InvalidOperationException("Mật khẩu không đúng.");
+
+        var (verified, needsRehash) = _passwordHasherService.VerifyHashedPassword(account, account.MatKhau, matKhau);
+        if (!verified)
+            throw new InvalidOperationException("Mật khẩu không đúng.");
+
+        if (needsRehash)
+        {
+            account.MatKhau = _passwordHasherService.HashPassword(account, matKhau);
+            await _context.SaveChangesAsync();
+        }
+
         await _context.Database.ExecuteSqlInterpolatedAsync(
-            $"EXEC ChamCong_CheckOut {maNV}, {matKhau}"
+            $"EXEC ChamCong_CheckOut {maNV}, {account.MatKhau}"
         );
 
         var item = await (

@@ -8,14 +8,10 @@ GO
    - Sau đó chạy toàn bộ schema + dữ liệu + view/function/procedure
    ========================================================= */
 
-IF DB_ID(N'QLCHCF') IS NOT NULL
+IF DB_ID(N'QLCHCF') IS NULL
 BEGIN
-    ALTER DATABASE [QLCHCF] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE [QLCHCF];
+    CREATE DATABASE [QLCHCF];
 END
-GO
-
-CREATE DATABASE [QLCHCF];
 GO
 
 ALTER DATABASE [QLCHCF] SET COMPATIBILITY_LEVEL = 160
@@ -439,7 +435,7 @@ GO
 CREATE TABLE [dbo].[TaiKhoan](
 	[MaTK] [varchar](10) NOT NULL,
 	[TenDangNhap] [varchar](50) NOT NULL,
-	[MatKhau] [varchar](50) NOT NULL,
+	[MatKhau] [varchar](255) NOT NULL,
 	[MaNV] [varchar](5) NOT NULL,
 	[VaiTro] [nvarchar](50) NOT NULL,
  CONSTRAINT [PK_TaiKhoan] PRIMARY KEY CLUSTERED 
@@ -1913,7 +1909,7 @@ GO
    ========================================================= */
 CREATE   PROC [dbo].[ChamCong_CheckOut]
     @MaNV varchar(5),
-    @MatKhau varchar(50)
+    @MatKhau varchar(255)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -3393,7 +3389,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   PROC [dbo].[TaiKhoan_DangNhap] @TenDangNhap varchar(50), @MatKhau varchar(50) AS
+CREATE   PROC [dbo].[TaiKhoan_DangNhap] @TenDangNhap varchar(50), @MatKhau varchar(255) AS
 BEGIN SET NOCOUNT ON; SELECT tk.MaTK,tk.TenDangNhap,tk.MaNV,nv.TenNV,tk.VaiTro FROM TaiKhoan tk INNER JOIN NhanVien nv ON tk.MaNV=nv.MaNV WHERE tk.TenDangNhap=@TenDangNhap AND tk.MatKhau=@MatKhau; END;
 
 
@@ -3417,7 +3413,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   PROC [dbo].[TaiKhoan_Sua] @MaTK varchar(10), @TenDangNhap varchar(50), @MatKhau varchar(50), @MaNV varchar(5), @VaiTro nvarchar(50) AS
+CREATE   PROC [dbo].[TaiKhoan_Sua] @MaTK varchar(10), @TenDangNhap varchar(50), @MatKhau varchar(255), @MaNV varchar(5), @VaiTro nvarchar(50) AS
 BEGIN SET NOCOUNT ON; UPDATE TaiKhoan SET TenDangNhap=@TenDangNhap,MatKhau=@MatKhau,MaNV=@MaNV,VaiTro=@VaiTro WHERE MaTK=@MaTK; END;
 
 
@@ -3428,7 +3424,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   PROC [dbo].[TaiKhoan_Them] @MaTK varchar(10)=NULL, @TenDangNhap varchar(50), @MatKhau varchar(50), @MaNV varchar(5), @VaiTro nvarchar(50) AS
+CREATE   PROC [dbo].[TaiKhoan_Them] @MaTK varchar(10)=NULL, @TenDangNhap varchar(50), @MatKhau varchar(255), @MaNV varchar(5), @VaiTro nvarchar(50) AS
 BEGIN
     SET NOCOUNT ON;
     IF @MaTK IS NULL OR LTRIM(RTRIM(@MaTK))=''

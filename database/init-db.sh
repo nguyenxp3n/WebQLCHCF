@@ -14,7 +14,16 @@ for i in {1..60}; do
     sleep 2
 done
 
-echo "==> Initializing database QLCHCF from /database/init.sql..."
+# Check if database QLCHCF already exists to prevent data loss on container restart
+echo "==> Checking if database QLCHCF already exists..."
+DB_EXISTS=$(/opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$SA_PASSWORD" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name = 'QLCHCF';" | tr -d '[:space:]')
+
+if [ "$DB_EXISTS" = "1" ]; then
+    echo "==> Database QLCHCF already exists. Skipping recreation to preserve existing transactional data."
+    exit 0
+fi
+
+echo "==> Initializing database QLCHCF from /database/init.sql..." 
 /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$SA_PASSWORD" -C -i /database/init.sql
 
 echo "==> All database initialization tasks completed successfully!"

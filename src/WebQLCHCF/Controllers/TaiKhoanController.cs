@@ -14,6 +14,7 @@ public class TaiKhoanController : BaseController
 {
     private readonly AppDbContext _context;
     private readonly IAuditLogService _auditLogService;
+    private readonly IPasswordHasherService _passwordHasherService;
     private static readonly Dictionary<string, string> Labels = new()
     {
         ["MaBan"] = "Mã bàn",
@@ -76,10 +77,15 @@ public class TaiKhoanController : BaseController
         ["DoanhThu"] = "Doanh thu",
     };
 
-    public TaiKhoanController(AppDbContext c, IAuditLogService auditLogService)
+    public TaiKhoanController(
+        AppDbContext c,
+        IAuditLogService auditLogService,
+        IPasswordHasherService? passwordHasherService = null
+    )
     {
         _context = c;
         _auditLogService = auditLogService;
+        _passwordHasherService = passwordHasherService ?? new PasswordHasherService();
     }
 
     private void SetUi(string title)
@@ -194,8 +200,9 @@ public class TaiKhoanController : BaseController
         }
         try
         {
+            var passwordToSave = _passwordHasherService.HashPassword(model, model.MatKhau);
             await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC TaiKhoan_Them {(string?)null}, {model.TenDangNhap}, {model.MatKhau}, {model.MaNV}, {model.VaiTro}"
+                $"EXEC TaiKhoan_Them {(string?)null}, {model.TenDangNhap}, {passwordToSave}, {model.MaNV}, {model.VaiTro}"
             );
             var created = await _context.TaiKhoans.AsNoTracking()
                 .Where(x => x.TenDangNhap == model.TenDangNhap && x.MaNV == model.MaNV)
@@ -271,8 +278,13 @@ public class TaiKhoanController : BaseController
         try
         {
             before ??= await _context.TaiKhoans.AsNoTracking().FirstOrDefaultAsync(x => x.MaTK == model.MaTK);
+            var passwordToSave = model.MatKhau;
+            if (before == null || !string.Equals(model.MatKhau, before.MatKhau, StringComparison.Ordinal))
+            {
+                passwordToSave = _passwordHasherService.HashPassword(model, model.MatKhau);
+            }
             await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC TaiKhoan_Sua {model.MaTK}, {model.TenDangNhap}, {model.MatKhau}, {model.MaNV}, {model.VaiTro}"
+                $"EXEC TaiKhoan_Sua {model.MaTK}, {model.TenDangNhap}, {passwordToSave}, {model.MaNV}, {model.VaiTro}"
             );
             await _auditLogService.LogAsync(
                 "Tài khoản",
