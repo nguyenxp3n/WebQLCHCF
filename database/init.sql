@@ -3757,42 +3757,6 @@ BEGIN
             ELSE N'H?y order th�nh c�ng.'
         END AS Message;
 END;
-
-    IF @TrangThaiThanhToan = N'DaThanhToan'
-    BEGIN
-        RAISERROR(N'Hóa đơn đã thanh toán, không được hủy.', 16, 1);
-        ROLLBACK TRANSACTION;
-        RETURN;
-    END;
-
-    UPDATE dbo.ThanhToan
-    SET TrangThai = N'DaHuy',
-        GhiChu = LEFT(CONCAT(ISNULL(GhiChu, N''), N' | Hủy order. ', ISNULL(@LyDo, N'')), 255)
-    WHERE MaHD = @MaHD
-      AND TrangThai IN (N'ChuaThanhToan', N'ChoThanhToanQR', N'HetHan', N'ChoKiemTra');
-
-    UPDATE dbo.HoaDon
-    SET TrangThaiOrder = N'DaHuy',
-        TrangThaiThanhToan = N'DaHuy',
-        GhiChu = LEFT(CONCAT(ISNULL(GhiChu, N''), N' | Lý do hủy: ', ISNULL(@LyDo, N'Không có')), 100)
-    WHERE MaHD = @MaHD;
-
-    IF @MaBan IS NOT NULL AND @MaBan <> 'MVE'
-    BEGIN
-        UPDATE dbo.Ban
-        SET TrangThai = N'Trống'
-        WHERE MaBan = @MaBan;
-    END;
-
-    COMMIT TRANSACTION;
-
-    SELECT
-        CAST(1 AS bit) AS Success,
-        N'Hủy order thành công. Bàn đã trả về Trống nếu là đơn tại quán.' AS Message,
-        @MaHD AS MaHD,
-        @MaBan AS MaBan;
-END
-
 GO
 /****** Object:  StoredProcedure [dbo].[ThanhToan_QRHetHan]    Script Date: 05/30/2026 11:12:10 AM ******/
 SET ANSI_NULLS ON
