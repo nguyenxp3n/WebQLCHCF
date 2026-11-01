@@ -157,20 +157,25 @@ public class PhieuNhapController : BaseController
             return View(model);
         try
         {
-            await using var transaction = await _context.Database.BeginTransactionAsync(
-                IsolationLevel.Serializable
-            );
-            var maPN = await NextCodeHelper.NextPhieuNhapAsync(
-                _context.PhieuNhaps.Select(x => x.MaPN),
-                model.NgayNhap
-            );
-            await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC PhieuNhap_Them {maPN}, {model.NgayNhap}, {model.MaNV}"
-            );
-            await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC CTPN_Them {maPN}, {maNL}, {soLuong!.Value}, {donGia!.Value}"
-            );
-            await transaction.CommitAsync();
+            var strategy = _context.Database.CreateExecutionStrategy();
+            var maPN = await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable
+                );
+                var code = await NextCodeHelper.NextPhieuNhapAsync(
+                    _context.PhieuNhaps.Select(x => x.MaPN),
+                    model.NgayNhap
+                );
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"EXEC PhieuNhap_Them {code}, {model.NgayNhap}, {model.MaNV}"
+                );
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"EXEC CTPN_Them {code}, {maNL}, {soLuong!.Value}, {donGia!.Value}"
+                );
+                await transaction.CommitAsync();
+                return code;
+            });
             TempData["Success"] = "Thêm phiếu nhập thành công.";
             return RedirectToAction(nameof(Details), new { id = maPN });
         }

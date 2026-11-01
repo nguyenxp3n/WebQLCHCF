@@ -199,56 +199,60 @@ public class OrderService : IOrderService
             maKh = customerExists ? model.MaKH : null;
         }
 
-        await using var tx = await _context.Database.BeginTransactionAsync();
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            var maBan = await ResolveTableAsync(model);
-            await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC HoaDon_Them {(string?)null}, {DateTime.Today}, {maNV}, {maKh}, {model.GhiChu}, {maBan}"
-            );
-
-            var maHD = await _context
-                .HoaDons.AsNoTracking()
-                .Where(x => x.MaNV == maNV && x.NgayLap == DateTime.Today && x.MaBan == maBan)
-                .OrderByDescending(x => x.MaHD)
-                .Select(x => x.MaHD)
-                .FirstOrDefaultAsync();
-
-            if (string.IsNullOrWhiteSpace(maHD))
-                throw new InvalidOperationException("Không tìm thấy hóa đơn vừa tạo.");
-
-            foreach (var item in orderItems)
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            try
             {
-                var product = await _context
-                    .SanPhams.AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.MaSP == item.MaSP);
-
-                if (product == null)
-                    throw new InvalidOperationException($"Sản phẩm {item.MaSP} không tồn tại.");
-
-                if (product.TrangThai != TrangThaiDangBan)
-                    throw new InvalidOperationException(
-                        $"Sản phẩm {product.TenSP} hiện không ở trạng thái Đang bán."
-                    );
-
-                var maKM = await ResolveActivePromotionAsync(item.MaKM);
-
+                var maBan = await ResolveTableAsync(model);
                 await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC CTHD_Them {maHD}, {product.MaSP}, {item.SoLuong}, {product.DonGia}, {maKM}"
+                    $"EXEC HoaDon_Them {(string?)null}, {DateTime.Today}, {maNV}, {maKh}, {model.GhiChu}, {maBan}"
                 );
+
+                var maHD = await _context
+                    .HoaDons.AsNoTracking()
+                    .Where(x => x.MaNV == maNV && x.NgayLap == DateTime.Today && x.MaBan == maBan)
+                    .OrderByDescending(x => x.MaHD)
+                    .Select(x => x.MaHD)
+                    .FirstOrDefaultAsync();
+
+                if (string.IsNullOrWhiteSpace(maHD))
+                    throw new InvalidOperationException("Không tìm thấy hóa đơn vừa tạo.");
+
+                foreach (var item in orderItems)
+                {
+                    var product = await _context
+                        .SanPhams.AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.MaSP == item.MaSP);
+
+                    if (product == null)
+                        throw new InvalidOperationException($"Sản phẩm {item.MaSP} không tồn tại.");
+
+                    if (product.TrangThai != TrangThaiDangBan)
+                        throw new InvalidOperationException(
+                            $"Sản phẩm {product.TenSP} hiện không ở trạng thái Đang bán."
+                        );
+
+                    var maKM = await ResolveActivePromotionAsync(item.MaKM);
+
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"EXEC CTHD_Them {maHD}, {product.MaSP}, {item.SoLuong}, {product.DonGia}, {maKM}"
+                    );
+                }
+
+                if (model.HinhThuc == OrderWorkflowConstants.HinhThucTaiQuan)
+                    await UpdateTableStatusAsync(maBan, OrderWorkflowConstants.TrangThaiBanDangPhucVu);
+
+                await tx.CommitAsync();
+                return maHD;
             }
-
-            if (model.HinhThuc == OrderWorkflowConstants.HinhThucTaiQuan)
-                await UpdateTableStatusAsync(maBan, OrderWorkflowConstants.TrangThaiBanDangPhucVu);
-
-            await tx.CommitAsync();
-            return maHD;
-        }
-        catch
-        {
-            await tx.RollbackAsync();
-            throw;
-        }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        });
     }
 
     public async Task<string> UpdateOrderAsync(OrderCreateViewModel model, string maNV)
@@ -281,56 +285,60 @@ public class OrderService : IOrderService
             maKh = customerExists ? model.MaKH : null;
         }
 
-        await using var tx = await _context.Database.BeginTransactionAsync();
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC HoaDon_Sua {hoaDon.MaHD}, {hoaDon.NgayLap}, {hoaDon.MaNV}, {maKh}, {model.GhiChu}, {hoaDon.MaBan}"
-            );
-
-            var currentDetails = await _context.CTHDs.AsNoTracking()
-                .Where(x => x.MaHD == hoaDon.MaHD)
-                .Select(x => x.MaSP)
-                .ToListAsync();
-
-            foreach (var maSP in currentDetails)
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            try
             {
                 await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC CTHD_Xoa {hoaDon.MaHD}, {maSP}"
+                    $"EXEC HoaDon_Sua {hoaDon.MaHD}, {hoaDon.NgayLap}, {hoaDon.MaNV}, {maKh}, {model.GhiChu}, {hoaDon.MaBan}"
                 );
-            }
 
-            foreach (var item in orderItems)
-            {
-                var product = await _context.SanPhams.AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.MaSP == item.MaSP);
+                var currentDetails = await _context.CTHDs.AsNoTracking()
+                    .Where(x => x.MaHD == hoaDon.MaHD)
+                    .Select(x => x.MaSP)
+                    .ToListAsync();
 
-                if (product == null)
-                    throw new InvalidOperationException($"Sản phẩm {item.MaSP} không tồn tại.");
-
-                if (product.TrangThai != TrangThaiDangBan)
-                    throw new InvalidOperationException(
-                        $"Sản phẩm {product.TenSP} hiện không ở trạng thái Đang bán."
+                foreach (var maSP in currentDetails)
+                {
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"EXEC CTHD_Xoa {hoaDon.MaHD}, {maSP}"
                     );
+                }
 
-                var maKM = await ResolveActivePromotionAsync(item.MaKM);
+                foreach (var item in orderItems)
+                {
+                    var product = await _context.SanPhams.AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.MaSP == item.MaSP);
 
-                await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC CTHD_Them {hoaDon.MaHD}, {product.MaSP}, {item.SoLuong}, {product.DonGia}, {maKM}"
-                );
+                    if (product == null)
+                        throw new InvalidOperationException($"Sản phẩm {item.MaSP} không tồn tại.");
+
+                    if (product.TrangThai != TrangThaiDangBan)
+                        throw new InvalidOperationException(
+                            $"Sản phẩm {product.TenSP} hiện không ở trạng thái Đang bán."
+                        );
+
+                    var maKM = await ResolveActivePromotionAsync(item.MaKM);
+
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"EXEC CTHD_Them {hoaDon.MaHD}, {product.MaSP}, {item.SoLuong}, {product.DonGia}, {maKM}"
+                    );
+                }
+
+                if (hoaDon.MaBan != OrderWorkflowConstants.MaBanMangVe)
+                    await UpdateTableStatusAsync(hoaDon.MaBan, OrderWorkflowConstants.TrangThaiBanDangPhucVu);
+
+                await tx.CommitAsync();
+                return hoaDon.MaHD;
             }
-
-            if (hoaDon.MaBan != OrderWorkflowConstants.MaBanMangVe)
-                await UpdateTableStatusAsync(hoaDon.MaBan, OrderWorkflowConstants.TrangThaiBanDangPhucVu);
-
-            await tx.CommitAsync();
-            return hoaDon.MaHD;
-        }
-        catch
-        {
-            await tx.RollbackAsync();
-            throw;
-        }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        });
     }
 
     public async Task<OrderReceiptViewModel?> GetReceiptAsync(string maHD)
