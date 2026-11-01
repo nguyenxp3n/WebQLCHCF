@@ -328,16 +328,36 @@ public class BanController : BaseController
                     && x.TrangThaiThanhToan != OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
                 .ToListAsync();
 
-            foreach (var order in unpaidOrders)
+            if (_context.Database.IsRelational())
             {
-                order.TrangThaiOrder = OrderWorkflowConstants.TrangThaiOrderDaHuy;
-                order.GhiChu = string.IsNullOrWhiteSpace(order.GhiChu)
-                    ? "[Hủy do khôi phục bàn]"
-                    : order.GhiChu + " [Hủy do khôi phục bàn]";
+                var strategy = _context.Database.CreateExecutionStrategy();
+                await strategy.ExecuteAsync(async () =>
+                {
+                    await using var tx = await _context.Database.BeginTransactionAsync();
+                    foreach (var order in unpaidOrders)
+                    {
+                        order.TrangThaiOrder = OrderWorkflowConstants.TrangThaiOrderDaHuy;
+                        order.GhiChu = string.IsNullOrWhiteSpace(order.GhiChu)
+                            ? "[Hủy do khôi phục bàn]"
+                            : order.GhiChu + " [Hủy do khôi phục bàn]";
+                    }
+                    await _context.SaveChangesAsync();
+                    await _context.Database.ExecuteSqlInterpolatedAsync($"EXEC Ban_KhachDi {table.MaBan}");
+                    await tx.CommitAsync();
+                });
             }
-
-            await _context.Database.ExecuteSqlInterpolatedAsync($"EXEC Ban_KhachDi {table.MaBan}");
-            await _context.SaveChangesAsync();
+            else
+            {
+                foreach (var order in unpaidOrders)
+                {
+                    order.TrangThaiOrder = OrderWorkflowConstants.TrangThaiOrderDaHuy;
+                    order.GhiChu = string.IsNullOrWhiteSpace(order.GhiChu)
+                        ? "[Hủy do khôi phục bàn]"
+                        : order.GhiChu + " [Hủy do khôi phục bàn]";
+                }
+                table.TrangThai = TrangThaiOffline;
+                await _context.SaveChangesAsync();
+            }
 
             await _auditLogService.LogAsync(
                 "Bàn",

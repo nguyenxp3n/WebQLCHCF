@@ -41,4 +41,6 @@ public class HoaDon
 
     [StringLength(36)]
     public string? ClientRequestId { get; set; }
+
+    public bool DaTruKho { get; set; } = false;
 }

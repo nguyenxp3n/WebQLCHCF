@@ -397,9 +397,13 @@ public class OrderConcurrencyAndIdempotencyTests
 
         var sharedToken = Guid.NewGuid().ToString("D");
 
-        // Simulate 10 simultaneous HTTP requests hitting SQL Server through separate DbContext & connection instances
+        // Simulate 10 simultaneous HTTP requests hitting SQL Server synchronously via Barrier
+        using var barrier1 = new Barrier(10);
         var tasks = Enumerable.Range(1, 10).Select(async _ =>
         {
+            await Task.Yield();
+            barrier1.SignalAndWait();
+
             await using var reqContext = new AppDbContext(options);
             var reqService = new OrderService(reqContext);
 
@@ -463,9 +467,13 @@ public class OrderConcurrencyAndIdempotencyTests
 
         var tokenList = Enumerable.Range(1, 10).Select(_ => Guid.NewGuid().ToString("D")).ToList();
 
-        // 10 concurrent requests each with distinct ClientRequestId
+        // 10 concurrent requests each with distinct ClientRequestId launched via Barrier
+        using var barrier2 = new Barrier(10);
         var tasks = tokenList.Select(async token =>
         {
+            await Task.Yield();
+            barrier2.SignalAndWait();
+
             await using var reqContext = new AppDbContext(options);
             var reqService = new OrderService(reqContext);
 

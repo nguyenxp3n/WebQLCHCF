@@ -280,6 +280,7 @@ CREATE TABLE [dbo].[HoaDon](
 	[ThoiGianTao] [datetime2](0) NOT NULL,
 	[ThoiGianThanhToan] [datetime2](0) NULL,
 	[ClientRequestId] [varchar](36) NULL,
+	[DaTruKho] [bit] NOT NULL CONSTRAINT [DF_HoaDon_DaTruKho] DEFAULT ((0)),
  CONSTRAINT [PK_HoaDon] PRIMARY KEY CLUSTERED 
 (
 	[MaHD] ASC
@@ -2490,7 +2491,23 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 CREATE   PROC [dbo].[CTHD_Them] @MaHD varchar(9), @MaSP varchar(5), @SoLuong int, @DonGia money, @MaKM varchar(5)=NULL AS
-BEGIN SET NOCOUNT ON; INSERT INTO CTHD(MaHD,MaSP,SoLuong,DonGia,MaKM) VALUES(@MaHD,@MaSP,@SoLuong,@DonGia,@MaKM); EXEC HoaDon_CapNhatTongTien @MaHD; END;
+BEGIN
+    SET NOCOUNT ON; SET XACT_ABORT ON;
+    BEGIN TRY
+        BEGIN TRAN;
+        DECLARE @TrangThaiOrder nvarchar(30), @TrangThaiThanhToan nvarchar(30);
+        SELECT @TrangThaiOrder = TrangThaiOrder, @TrangThaiThanhToan = TrangThaiThanhToan FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK) WHERE MaHD = @MaHD;
+        IF @TrangThaiOrder IS NULL THROW 50001, N'Hóa đơn không tồn tại.', 1;
+        IF @TrangThaiOrder = N'DaHuy' OR @TrangThaiThanhToan = N'DaThanhToan' OR @TrangThaiThanhToan = N'ChoThanhToanQR'
+            THROW 50006, N'Hóa đơn đã thanh toán hoặc đã hủy, không thể thêm chi tiết món.', 1;
+        IF EXISTS (SELECT 1 FROM CTHD WITH (UPDLOCK, HOLDLOCK) WHERE MaHD = @MaHD AND MaSP = @MaSP)
+            UPDATE CTHD SET SoLuong = SoLuong + @SoLuong, DonGia = @DonGia, MaKM = @MaKM WHERE MaHD = @MaHD AND MaSP = @MaSP;
+        ELSE
+            INSERT INTO CTHD(MaHD,MaSP,SoLuong,DonGia,MaKM) VALUES(@MaHD,@MaSP,@SoLuong,@DonGia,@MaKM);
+        EXEC HoaDon_CapNhatTongTien @MaHD;
+        COMMIT TRAN;
+    END TRY BEGIN CATCH IF @@TRANCOUNT > 0 ROLLBACK TRAN; THROW; END CATCH
+END;
 
 
 
@@ -2501,7 +2518,20 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 CREATE   PROC [dbo].[CTHD_Xoa] @MaHD varchar(9), @MaSP varchar(5) AS
-BEGIN SET NOCOUNT ON; DELETE FROM CTHD WHERE MaHD=@MaHD AND MaSP=@MaSP; EXEC HoaDon_CapNhatTongTien @MaHD; END;
+BEGIN
+    SET NOCOUNT ON; SET XACT_ABORT ON;
+    BEGIN TRY
+        BEGIN TRAN;
+        DECLARE @TrangThaiOrder nvarchar(30), @TrangThaiThanhToan nvarchar(30);
+        SELECT @TrangThaiOrder = TrangThaiOrder, @TrangThaiThanhToan = TrangThaiThanhToan FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK) WHERE MaHD = @MaHD;
+        IF @TrangThaiOrder IS NULL THROW 50001, N'Hóa đơn không tồn tại.', 1;
+        IF @TrangThaiOrder = N'DaHuy' OR @TrangThaiThanhToan = N'DaThanhToan' OR @TrangThaiThanhToan = N'ChoThanhToanQR'
+            THROW 50006, N'Hóa đơn đã thanh toán hoặc đã hủy, không thể xóa chi tiết món.', 1;
+        DELETE FROM CTHD WHERE MaHD=@MaHD AND MaSP=@MaSP;
+        EXEC HoaDon_CapNhatTongTien @MaHD;
+        COMMIT TRAN;
+    END TRY BEGIN CATCH IF @@TRANCOUNT > 0 ROLLBACK TRAN; THROW; END CATCH
+END;
 
 
 

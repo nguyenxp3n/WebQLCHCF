@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,42 @@ public class AccountController : Controller
     private readonly IChamCongService _chamCongService;
     private readonly IAuditLogService _auditLogService;
     private readonly IPasswordHasherService _passwordHasherService;
+
+    private static readonly ConcurrentDictionary<string, (int FailedCount, DateTime LockoutUntil)> _loginAttempts = new(StringComparer.OrdinalIgnoreCase);
+    public const int MaxFailedAttempts = 5;
+    public static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(5);
+
+    public static void ResetLoginAttempts(string username)
+    {
+        _loginAttempts.TryRemove(username, out _);
+    }
+
+    public static bool IsLockedOut(string username, out TimeSpan remaining)
+    {
+        remaining = TimeSpan.Zero;
+        if (!string.IsNullOrWhiteSpace(username) && _loginAttempts.TryGetValue(username, out var info))
+        {
+            if (DateTime.UtcNow < info.LockoutUntil)
+            {
+                remaining = info.LockoutUntil - DateTime.UtcNow;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void RecordFailedLogin(string username)
+    {
+        if (string.IsNullOrWhiteSpace(username)) return;
+        _loginAttempts.AddOrUpdate(username,
+            _ => (1, DateTime.MinValue),
+            (_, old) =>
+            {
+                var newCount = old.FailedCount + 1;
+                var lockout = newCount >= MaxFailedAttempts ? DateTime.UtcNow.Add(LockoutDuration) : DateTime.MinValue;
+                return (newCount, lockout);
+            });
+    }
 
     public AccountController(
         AppDbContext context,
@@ -52,22 +89,50 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
+        var username = model.TenDangNhap?.Trim() ?? string.Empty;
+        if (IsLockedOut(username, out var remaining))
+        {
+            var minutes = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
+            ModelState.AddModelError(string.Empty, $"Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau {minutes} phút.");
+            return View(model);
+        }
+
         try
         {
             var account = await _context.TaiKhoans.FirstOrDefaultAsync(x => x.TenDangNhap == model.TenDangNhap);
 
             if (account == null)
             {
-                ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
+                RecordFailedLogin(username);
+                if (IsLockedOut(username, out var lockRemaining))
+                {
+                    var minutes = Math.Max(1, (int)Math.Ceiling(lockRemaining.TotalMinutes));
+                    ModelState.AddModelError(string.Empty, $"Bạn đã nhập sai quá {MaxFailedAttempts} lần. Tài khoản tạm thời bị khóa trong {minutes} phút.");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
+                }
                 return View(model);
             }
 
             var (verified, needsRehash) = _passwordHasherService.VerifyHashedPassword(account, account.MatKhau, model.MatKhau);
             if (!verified)
             {
-                ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
+                RecordFailedLogin(username);
+                if (IsLockedOut(username, out var lockRemaining))
+                {
+                    var minutes = Math.Max(1, (int)Math.Ceiling(lockRemaining.TotalMinutes));
+                    ModelState.AddModelError(string.Empty, $"Bạn đã nhập sai quá {MaxFailedAttempts} lần. Tài khoản tạm thời bị khóa trong {minutes} phút.");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
+                }
                 return View(model);
             }
+
+            ResetLoginAttempts(username);
 
             if (needsRehash)
             {

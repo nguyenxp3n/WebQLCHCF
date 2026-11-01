@@ -117,9 +117,9 @@ public static class CafeOrderCalculator
     public static string SinhUrlVietQr(
         decimal soTien,
         string noiDungChuyenKhoan,
-        string bankCode = "MB",
-        string accountNo = "0332135258",
-        string accountName = "HOANG CHIEM NGUYEN")
+        string bankCode = "970422",
+        string accountNo = "0000000000",
+        string accountName = "QLCHCF DEMO STORE")
     {
         string encodedContent = WebUtility.UrlEncode(noiDungChuyenKhoan ?? string.Empty);
         string encodedAccount = WebUtility.UrlEncode(accountName ?? string.Empty);

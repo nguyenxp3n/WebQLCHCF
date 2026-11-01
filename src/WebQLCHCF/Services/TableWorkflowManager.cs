@@ -82,10 +82,16 @@ public static class TableWorkflowManager
 
     /// <summary>
     /// Kiểm tra xem hóa đơn có cho phép thêm chi tiết món hay không.
-    /// Hóa đơn đã thanh toán tuyệt đối bất biến, từ chối thêm chi tiết món mới.
+    /// Hóa đơn đã thanh toán hoặc đã hủy tuyệt đối bất biến, từ chối thêm chi tiết món mới.
     /// </summary>
-    public static bool CanAddLineItem(string? trangThaiThanhToan, out string? reason)
+    public static bool CanAddLineItem(string? trangThaiOrder, string? trangThaiThanhToan, out string? reason)
     {
+        if (string.Equals(trangThaiOrder, OrderWorkflowConstants.TrangThaiOrderDaHuy, StringComparison.OrdinalIgnoreCase))
+        {
+            reason = "Hóa đơn đã hủy, không thể thêm chi tiết.";
+            return false;
+        }
+
         if (IsPaid(trangThaiThanhToan))
         {
             reason = "Hóa đơn đã thanh toán, không thể thêm chi tiết.";
@@ -96,12 +102,21 @@ public static class TableWorkflowManager
         return true;
     }
 
+    public static bool CanAddLineItem(string? trangThaiThanhToan, out string? reason)
+        => CanAddLineItem(null, trangThaiThanhToan, out reason);
+
     /// <summary>
     /// Kiểm tra xem hóa đơn có cho phép chỉnh sửa chi tiết món hay không.
-    /// Hóa đơn đã thanh toán tuyệt đối bất biến, từ chối chỉnh sửa chi tiết món.
+    /// Hóa đơn đã thanh toán hoặc đã hủy tuyệt đối bất biến, từ chối chỉnh sửa chi tiết món.
     /// </summary>
-    public static bool CanEditLineItem(string? trangThaiThanhToan, out string? reason)
+    public static bool CanEditLineItem(string? trangThaiOrder, string? trangThaiThanhToan, out string? reason)
     {
+        if (string.Equals(trangThaiOrder, OrderWorkflowConstants.TrangThaiOrderDaHuy, StringComparison.OrdinalIgnoreCase))
+        {
+            reason = "Hóa đơn đã hủy, không thể chỉnh sửa chi tiết.";
+            return false;
+        }
+
         if (IsPaid(trangThaiThanhToan))
         {
             reason = "Hóa đơn đã thanh toán, không thể chỉnh sửa chi tiết.";
@@ -112,12 +127,21 @@ public static class TableWorkflowManager
         return true;
     }
 
+    public static bool CanEditLineItem(string? trangThaiThanhToan, out string? reason)
+        => CanEditLineItem(null, trangThaiThanhToan, out reason);
+
     /// <summary>
     /// Kiểm tra xem hóa đơn có cho phép xóa chi tiết món hay không.
-    /// Hóa đơn đã thanh toán tuyệt đối bất biến, từ chối xóa chi tiết món.
+    /// Hóa đơn đã thanh toán hoặc đã hủy tuyệt đối bất biến, từ chối xóa chi tiết món.
     /// </summary>
-    public static bool CanDeleteLineItem(string? trangThaiThanhToan, out string? reason)
+    public static bool CanDeleteLineItem(string? trangThaiOrder, string? trangThaiThanhToan, out string? reason)
     {
+        if (string.Equals(trangThaiOrder, OrderWorkflowConstants.TrangThaiOrderDaHuy, StringComparison.OrdinalIgnoreCase))
+        {
+            reason = "Hóa đơn đã hủy, không thể xóa chi tiết.";
+            return false;
+        }
+
         if (IsPaid(trangThaiThanhToan))
         {
             reason = "Hóa đơn đã thanh toán, không thể xóa chi tiết.";
@@ -127,4 +151,7 @@ public static class TableWorkflowManager
         reason = null;
         return true;
     }
+
+    public static bool CanDeleteLineItem(string? trangThaiThanhToan, out string? reason)
+        => CanDeleteLineItem(null, trangThaiThanhToan, out reason);
 }

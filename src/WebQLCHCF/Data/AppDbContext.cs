@@ -72,6 +72,7 @@ public class AppDbContext : DbContext
         b.Entity<HoaDon>().Property(x => x.TrangThaiThanhToan).HasMaxLength(30);
         b.Entity<HoaDon>().Property(x => x.PhuongThucThanhToan).HasMaxLength(30);
         b.Entity<HoaDon>().Property(x => x.ClientRequestId).HasMaxLength(36).IsUnicode(false);
+        b.Entity<HoaDon>().Property(x => x.DaTruKho).HasDefaultValue(false);
         b.Entity<HoaDon>().HasIndex(x => x.ClientRequestId).IsUnique();
         b.Entity<ThanhToan>().ToTable("ThanhToan");
         b.Entity<ThanhToan>().Property(x => x.SoTien).HasColumnType("money");

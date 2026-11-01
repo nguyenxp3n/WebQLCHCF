@@ -58,7 +58,7 @@ public class AuditLogService : IAuditLogService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(
+            _logger.LogError(
                 ex,
                 "Không thể ghi audit log. ChucNang={ChucNang}, HanhDong={HanhDong}, DoiTuong={DoiTuong}, MaDoiTuong={MaDoiTuong}",
                 chucNang,

@@ -10,6 +10,7 @@ namespace WebQLCHCF.Security;
 public sealed class RoleAuthorizeAttribute : ActionFilterAttribute
 {
     private readonly HashSet<string> _allowedRoles;
+    public IReadOnlyCollection<string> AllowedRoles => _allowedRoles;
 
     public RoleAuthorizeAttribute(params string[] roles)
     {

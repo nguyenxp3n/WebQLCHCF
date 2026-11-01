@@ -241,6 +241,7 @@ public class HoaDonController : BaseController
     }
 
     [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Create()
     {
         SetHoaDonUi("Thêm hóa đơn");
@@ -254,6 +255,7 @@ public class HoaDonController : BaseController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Create(HoaDon model)
     {
         SetHoaDonUi("Thêm hóa đơn");
@@ -281,13 +283,29 @@ public class HoaDonController : BaseController
         }
     }
 
-    private async Task<bool> IsHoaDonDaThanhToanAsync(string? maHD)
+    private async Task<(bool CanModify, string Reason)> CanModifyHoaDonAsync(string? maHD)
     {
         if (string.IsNullOrWhiteSpace(maHD))
-            return false;
+            return (false, "Mã hóa đơn không hợp lệ.");
 
-        return await _context.HoaDons.AsNoTracking()
-            .AnyAsync(x => x.MaHD == maHD && (x.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan || x.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanChoThanhToanQr));
+        var hoaDon = await _context.HoaDons.AsNoTracking()
+            .Where(x => x.MaHD == maHD)
+            .Select(x => new { x.TrangThaiOrder, x.TrangThaiThanhToan })
+            .FirstOrDefaultAsync();
+
+        if (hoaDon == null)
+            return (false, "Không tìm thấy hóa đơn.");
+
+        if (hoaDon.TrangThaiOrder == OrderWorkflowConstants.TrangThaiOrderDaHuy)
+            return (false, "Hóa đơn đã hủy, không thể chỉnh sửa hoặc thao tác chi tiết.");
+
+        if (hoaDon.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
+            return (false, "Hóa đơn đã thanh toán, không thể chỉnh sửa hoặc thao tác chi tiết.");
+
+        if (hoaDon.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanChoThanhToanQr)
+            return (false, "Hóa đơn đang chờ thanh toán QR, không thể chỉnh sửa hoặc thao tác chi tiết.");
+
+        return (true, string.Empty);
     }
 
     [HttpGet]
@@ -297,9 +315,10 @@ public class HoaDonController : BaseController
         if (id == null)
             return NotFound();
 
-        if (await IsHoaDonDaThanhToanAsync(id))
+        var check = await CanModifyHoaDonAsync(id);
+        if (!check.CanModify)
         {
-            TempData["Error"] = "Hóa đơn đã thanh toán, không thể chỉnh sửa.";
+            TempData["Error"] = check.Reason;
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -332,9 +351,10 @@ public class HoaDonController : BaseController
         if (id == null || id != model.MaHD)
             return NotFound();
 
-        if (await IsHoaDonDaThanhToanAsync(model.MaHD))
+        var check = await CanModifyHoaDonAsync(model.MaHD);
+        if (!check.CanModify)
         {
-            TempData["Error"] = "Hóa đơn đã thanh toán, không thể chỉnh sửa.";
+            TempData["Error"] = check.Reason;
             return RedirectToAction(nameof(Details), new { id = model.MaHD });
         }
 
@@ -390,9 +410,10 @@ public class HoaDonController : BaseController
     [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> AddDetail(string maHD)
     {
-        if (await IsHoaDonDaThanhToanAsync(maHD))
+        var check = await CanModifyHoaDonAsync(maHD);
+        if (!check.CanModify)
         {
-            TempData["Error"] = "Hóa đơn đã thanh toán, không thể thêm chi tiết.";
+            TempData["Error"] = check.Reason;
             return RedirectToAction(nameof(Details), new { id = maHD });
         }
 
@@ -404,9 +425,10 @@ public class HoaDonController : BaseController
     [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> AddDetail(CTHD model)
     {
-        if (await IsHoaDonDaThanhToanAsync(model.MaHD))
+        var check = await CanModifyHoaDonAsync(model.MaHD);
+        if (!check.CanModify)
         {
-            TempData["Error"] = "Hóa đơn đã thanh toán, không thể thêm chi tiết.";
+            TempData["Error"] = check.Reason;
             return RedirectToAction(nameof(Details), new { id = model.MaHD });
         }
 
@@ -439,9 +461,10 @@ public class HoaDonController : BaseController
     [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> EditDetail(string maHD, string maSP)
     {
-        if (await IsHoaDonDaThanhToanAsync(maHD))
+        var check = await CanModifyHoaDonAsync(maHD);
+        if (!check.CanModify)
         {
-            TempData["Error"] = "Hóa đơn đã thanh toán, không thể chỉnh sửa chi tiết.";
+            TempData["Error"] = check.Reason;
             return RedirectToAction(nameof(Details), new { id = maHD });
         }
 
@@ -469,9 +492,10 @@ public class HoaDonController : BaseController
     [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> EditDetail(CTHD model)
     {
-        if (await IsHoaDonDaThanhToanAsync(model.MaHD))
+        var check = await CanModifyHoaDonAsync(model.MaHD);
+        if (!check.CanModify)
         {
-            TempData["Error"] = "Hóa đơn đã thanh toán, không thể chỉnh sửa chi tiết.";
+            TempData["Error"] = check.Reason;
             return RedirectToAction(nameof(Details), new { id = model.MaHD });
         }
 
@@ -504,9 +528,10 @@ public class HoaDonController : BaseController
     [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> DeleteDetail(string maHD, string maSP)
     {
-        if (await IsHoaDonDaThanhToanAsync(maHD))
+        var check = await CanModifyHoaDonAsync(maHD);
+        if (!check.CanModify)
         {
-            TempData["Error"] = "Hóa đơn đã thanh toán, không thể xóa chi tiết.";
+            TempData["Error"] = check.Reason;
             return RedirectToAction(nameof(Details), new { id = maHD });
         }
 
@@ -535,9 +560,10 @@ public class HoaDonController : BaseController
     [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> DeleteDetailConfirmed(string maHD, string maSP)
     {
-        if (await IsHoaDonDaThanhToanAsync(maHD))
+        var check = await CanModifyHoaDonAsync(maHD);
+        if (!check.CanModify)
         {
-            TempData["Error"] = "Hóa đơn đã thanh toán, không thể xóa chi tiết.";
+            TempData["Error"] = check.Reason;
             return RedirectToAction(nameof(Details), new { id = maHD });
         }
 

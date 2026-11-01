@@ -128,4 +128,37 @@ public class InvoiceImmutabilityTests
             Assert.NotNull(roleAttr);
         }
     }
+
+    [Theory]
+    [InlineData("DaHuy", "ChuaThanhToan")]
+    [InlineData("DaHuy", "ChoThanhToanQR")]
+    public void CanMutateLineItem_WhenOrderIsCancelled_AlwaysRejects(string orderStatus, string paymentStatus)
+    {
+        Assert.False(TableWorkflowManager.CanAddLineItem(orderStatus, paymentStatus, out var addReason));
+        Assert.Contains("đã hủy", addReason);
+
+        Assert.False(TableWorkflowManager.CanEditLineItem(orderStatus, paymentStatus, out var editReason));
+        Assert.Contains("đã hủy", editReason);
+
+        Assert.False(TableWorkflowManager.CanDeleteLineItem(orderStatus, paymentStatus, out var deleteReason));
+        Assert.Contains("đã hủy", deleteReason);
+    }
+
+    [Fact]
+    public void HoaDonController_CreateActions_RequireQuanLyRole()
+    {
+        var controllerType = typeof(HoaDonController);
+        var createMethods = controllerType
+            .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
+            .Where(m => m.Name == nameof(HoaDonController.Create))
+            .ToList();
+
+        Assert.Equal(2, createMethods.Count);
+        foreach (var method in createMethods)
+        {
+            var roleAttr = method.GetCustomAttribute<RoleAuthorizeAttribute>();
+            Assert.NotNull(roleAttr);
+            Assert.Contains(AppRoles.QuanLy, roleAttr.AllowedRoles);
+        }
+    }
 }

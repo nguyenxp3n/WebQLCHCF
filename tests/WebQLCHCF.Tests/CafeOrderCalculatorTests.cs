@@ -124,9 +124,9 @@ public class CafeOrderCalculatorTests
         string url = CafeOrderCalculator.SinhUrlVietQr(soTien, noiDung);
 
         Assert.Contains("img.vietqr.io", url);
-        Assert.Contains("MB-0332135258", url);
+        Assert.Contains("970422-0000000000", url);
         Assert.Contains("amount=75000", url);
         Assert.Contains("HD260531001", url);
-        Assert.Contains("HOANG+CHIEM+NGUYEN", url);
+        Assert.Contains("QLCHCF+DEMO+STORE", url);
     }
 }
