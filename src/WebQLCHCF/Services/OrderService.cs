@@ -682,29 +682,78 @@ public class OrderService : IOrderService
             .Select(x => new { x.MaKH, x.TrangThaiThanhToan, x.DaTruKho })
             .FirstOrDefaultAsync();
 
+        if (invoice == null)
+            throw new InvalidOperationException("Không tìm thấy hóa đơn cần hủy.");
+
+        if (invoice.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
+            throw new InvalidOperationException("Hóa đơn đã thanh toán, không được hủy bằng chức năng Hủy order thông thường. Quản lý vui lòng sử dụng chức năng Hoàn đơn.");
+
+        return await ExecutePaymentProcedureAsync(
+            "ThanhToan_HuyOrder",
+            ("@MaHD", maHD),
+            ("@LyDo", lyDo.Trim()),
+            ("@ChoPhepKhiDaThanhToan", false)
+        );
+    }
+
+    public async Task<PaymentCommandResultViewModel> RefundOrderAsync(string maHD, string lyDo)
+    {
+        if (string.IsNullOrWhiteSpace(lyDo))
+            throw new InvalidOperationException("Vui lòng nhập lý do hoàn đơn / hủy thanh toán.");
+
+        var invoice = await _context.HoaDons
+            .FirstOrDefaultAsync(x => x.MaHD == maHD);
+
+        if (invoice == null)
+            throw new InvalidOperationException("Không tìm thấy hóa đơn cần hoàn trả.");
+
+        if (invoice.TrangThaiThanhToan != OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
+            throw new InvalidOperationException("Chỉ hóa đơn đã thanh toán mới có thể thực hiện hoàn đơn.");
+
         var result = await ExecutePaymentProcedureAsync(
             "ThanhToan_HuyOrder",
             ("@MaHD", maHD),
-            ("@LyDo", lyDo.Trim())
+            ("@LyDo", lyDo.Trim()),
+            ("@ChoPhepKhiDaThanhToan", true)
         );
 
-        if (result.Success && invoice != null)
+        if (result.Success)
         {
-            if (invoice.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
+            if (invoice.DaCongDiem && !string.IsNullOrWhiteSpace(invoice.MaKH))
             {
-                if (!string.IsNullOrWhiteSpace(invoice.MaKH))
-                {
-                    await ReverseCustomerPointsAsync(maHD, invoice.MaKH);
-                }
-
-                if (invoice.DaTruKho)
-                {
-                    await RestoreInventoryForInvoiceAsync(maHD);
-                }
+                await ReverseCustomerPointsAsync(maHD, invoice.MaKH);
+                invoice.DaCongDiem = false;
             }
+
+            if (invoice.DaTruKho)
+            {
+                await RestoreInventoryForInvoiceAsync(maHD);
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         return result;
+    }
+
+    public async Task<int> ReconcilePendingPostPaymentAsync(string? maHD = null)
+    {
+        var query = _context.HoaDons
+            .Where(x => x.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan
+                && (!x.DaTruKho || (!x.DaCongDiem && x.MaKH != null)));
+
+        if (!string.IsNullOrWhiteSpace(maHD))
+        {
+            query = query.Where(x => x.MaHD == maHD);
+        }
+
+        var pendingInvoices = await query.Select(x => x.MaHD).ToListAsync();
+        foreach (var id in pendingInvoices)
+        {
+            await ProcessPostPaymentAsync(id);
+        }
+
+        return pendingInvoices.Count;
     }
 
     public async Task<PaymentCommandResultViewModel> EditOrderAsync(string maHD)
@@ -1016,9 +1065,21 @@ public class OrderService : IOrderService
         if (points <= 0)
             return;
 
-        await _context.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE dbo.KhachHang SET DiemTichLuy = ISNULL(DiemTichLuy, 0) + {points} WHERE MaKH = {maKH}"
-        );
+        if (_context.Database.IsRelational())
+        {
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE dbo.KhachHang SET DiemTichLuy = ISNULL(DiemTichLuy, 0) + {points} WHERE MaKH = {maKH}"
+            );
+        }
+        else
+        {
+            var customer = await _context.KhachHangs.FirstOrDefaultAsync(x => x.MaKH == maKH);
+            if (customer != null)
+            {
+                customer.DiemTichLuy = (customer.DiemTichLuy ?? 0) + points;
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 
     public async Task ReverseCustomerPointsAsync(string maHD, string maKH)
@@ -1032,9 +1093,21 @@ public class OrderService : IOrderService
         if (points <= 0)
             return;
 
-        await _context.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE dbo.KhachHang SET DiemTichLuy = CASE WHEN ISNULL(DiemTichLuy, 0) >= {points} THEN DiemTichLuy - {points} ELSE 0 END WHERE MaKH = {maKH}"
-        );
+        if (_context.Database.IsRelational())
+        {
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE dbo.KhachHang SET DiemTichLuy = CASE WHEN ISNULL(DiemTichLuy, 0) >= {points} THEN DiemTichLuy - {points} ELSE 0 END WHERE MaKH = {maKH}"
+            );
+        }
+        else
+        {
+            var customer = await _context.KhachHangs.FirstOrDefaultAsync(x => x.MaKH == maKH);
+            if (customer != null)
+            {
+                customer.DiemTichLuy = Math.Max(0, (customer.DiemTichLuy ?? 0) - points);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 
     private async Task<string> ResolveTableAsync(OrderCreateViewModel model)
@@ -1205,9 +1278,22 @@ public class OrderService : IOrderService
                         if (deductions.TryGetValue(ing.MaNL, out var deductAmount))
                         {
                             var currentStock = ing.SoLuongTon ?? 0;
-                            var newStock = currentStock - (int)Math.Round(deductAmount, MidpointRounding.AwayFromZero);
-                            ing.SoLuongTon = Math.Max(0, newStock);
+                            var targetDeduct = (int)Math.Round(deductAmount, MidpointRounding.AwayFromZero);
+                            var actualDeduct = Math.Min(Math.Max(0, currentStock), targetDeduct);
+
+                            ing.SoLuongTon = Math.Max(0, currentStock - actualDeduct);
                             ing.NgayCapNhat = DateTime.Today;
+
+                            if (actualDeduct > 0)
+                            {
+                                _context.LichSuTruKhos.Add(new LichSuTruKho
+                                {
+                                    MaHD = maHD,
+                                    MaNL = ing.MaNL,
+                                    SoLuongTruThucTe = actualDeduct,
+                                    ThoiGianTru = DateTime.UtcNow
+                                });
+                            }
                         }
                     }
                 }
@@ -1217,9 +1303,11 @@ public class OrderService : IOrderService
             await _context.SaveChangesAsync();
         }
 
-        if (!string.IsNullOrWhiteSpace(invoice.MaKH))
+        if (!invoice.DaCongDiem && !string.IsNullOrWhiteSpace(invoice.MaKH))
         {
             await AddCustomerPointsAsync(maHD, invoice.MaKH);
+            invoice.DaCongDiem = true;
+            await _context.SaveChangesAsync();
         }
     }
 
@@ -1229,49 +1317,28 @@ public class OrderService : IOrderService
         if (invoice == null || !invoice.DaTruKho)
             return;
 
-        var lineItems = await _context.CTHDs.AsNoTracking()
+        var snapshots = await _context.LichSuTruKhos
             .Where(x => x.MaHD == maHD)
-            .Select(x => new { x.MaSP, x.SoLuong })
             .ToListAsync();
 
-        if (lineItems.Any())
+        if (snapshots.Any())
         {
-            var productIds = lineItems.Select(x => x.MaSP).Distinct().ToList();
-            var recipes = await _context.CongThucs.AsNoTracking()
-                .Where(x => productIds.Contains(x.MaSP))
+            var ingredientIds = snapshots.Select(x => x.MaNL).Distinct().ToList();
+            var ingredients = await _context.NguyenLieus
+                .Where(x => ingredientIds.Contains(x.MaNL))
                 .ToListAsync();
 
-            if (recipes.Any())
+            foreach (var snap in snapshots)
             {
-                var additions = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-                foreach (var item in lineItems)
+                var ing = ingredients.FirstOrDefault(x => string.Equals(x.MaNL, snap.MaNL, StringComparison.OrdinalIgnoreCase));
+                if (ing != null)
                 {
-                    var itemRecipes = recipes.Where(r => string.Equals(r.MaSP, item.MaSP, StringComparison.OrdinalIgnoreCase));
-                    foreach (var r in itemRecipes)
-                    {
-                        var totalAdd = r.DinhLuong * item.SoLuong;
-                        if (additions.ContainsKey(r.MaNL))
-                            additions[r.MaNL] += totalAdd;
-                        else
-                            additions[r.MaNL] = totalAdd;
-                    }
-                }
-
-                var ingredientIds = additions.Keys.ToList();
-                var ingredients = await _context.NguyenLieus
-                    .Where(x => ingredientIds.Contains(x.MaNL))
-                    .ToListAsync();
-
-                foreach (var ing in ingredients)
-                {
-                    if (additions.TryGetValue(ing.MaNL, out var addAmount))
-                    {
-                        var currentStock = ing.SoLuongTon ?? 0;
-                        ing.SoLuongTon = currentStock + (int)Math.Round(addAmount, MidpointRounding.AwayFromZero);
-                        ing.NgayCapNhat = DateTime.Today;
-                    }
+                    ing.SoLuongTon = (ing.SoLuongTon ?? 0) + snap.SoLuongTruThucTe;
+                    ing.NgayCapNhat = DateTime.Today;
                 }
             }
+
+            _context.LichSuTruKhos.RemoveRange(snapshots);
         }
 
         invoice.DaTruKho = false;

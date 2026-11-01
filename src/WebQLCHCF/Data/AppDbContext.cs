@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<PhieuNhap> PhieuNhaps => Set<PhieuNhap>();
     public DbSet<TaiKhoan> TaiKhoans => Set<TaiKhoan>();
     public DbSet<CTHD> CTHDs => Set<CTHD>();
+    public DbSet<LichSuTruKho> LichSuTruKhos => Set<LichSuTruKho>();
     public DbSet<CTPN> CTPNs => Set<CTPN>();
     public DbSet<CongThuc> CongThucs => Set<CongThuc>();
     public DbSet<ChamCong> ChamCongs => Set<ChamCong>();
@@ -73,7 +74,9 @@ public class AppDbContext : DbContext
         b.Entity<HoaDon>().Property(x => x.PhuongThucThanhToan).HasMaxLength(30);
         b.Entity<HoaDon>().Property(x => x.ClientRequestId).HasMaxLength(36).IsUnicode(false);
         b.Entity<HoaDon>().Property(x => x.DaTruKho).HasDefaultValue(false);
+        b.Entity<HoaDon>().Property(x => x.DaCongDiem).HasDefaultValue(false);
         b.Entity<HoaDon>().HasIndex(x => x.ClientRequestId).IsUnique();
+        b.Entity<LichSuTruKho>().ToTable("LichSuTruKho");
         b.Entity<ThanhToan>().ToTable("ThanhToan");
         b.Entity<ThanhToan>().Property(x => x.SoTien).HasColumnType("money");
         b.Entity<ThanhToan>().Property(x => x.MaPhienThanhToan).HasMaxLength(50);
@@ -177,6 +180,8 @@ public class AppDbContext : DbContext
         b.Entity<CTPN>().HasOne<NguyenLieu>().WithMany().HasForeignKey(x => x.MaNL);
         b.Entity<CongThuc>().HasOne<SanPham>().WithMany().HasForeignKey(x => x.MaSP);
         b.Entity<CongThuc>().HasOne<NguyenLieu>().WithMany().HasForeignKey(x => x.MaNL);
+        b.Entity<LichSuTruKho>().HasOne(x => x.HoaDon).WithMany().HasForeignKey(x => x.MaHD).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<LichSuTruKho>().HasOne(x => x.NguyenLieu).WithMany().HasForeignKey(x => x.MaNL);
         b.Entity<ChamCong>().HasOne<NhanVien>().WithMany().HasForeignKey(x => x.MaNV);
     }
 }

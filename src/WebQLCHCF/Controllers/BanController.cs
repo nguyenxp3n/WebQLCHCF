@@ -322,21 +322,24 @@ public class BanController : BaseController
                 return RedirectToAction(nameof(Index));
             }
 
-            var unpaidOrders = await _context.HoaDons
-                .Where(x => x.MaBan == table.MaBan
-                    && x.TrangThaiOrder != OrderWorkflowConstants.TrangThaiOrderDaHuy
-                    && x.TrangThaiThanhToan != OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
-                .ToListAsync();
-
             if (_context.Database.IsRelational())
             {
                 var strategy = _context.Database.CreateExecutionStrategy();
                 await strategy.ExecuteAsync(async () =>
                 {
+                    _context.ChangeTracker.Clear();
                     await using var tx = await _context.Database.BeginTransactionAsync();
-                    foreach (var order in unpaidOrders)
+
+                    var currentUnpaidOrders = await _context.HoaDons
+                        .Where(x => x.MaBan == table.MaBan
+                            && x.TrangThaiOrder != OrderWorkflowConstants.TrangThaiOrderDaHuy
+                            && x.TrangThaiThanhToan != OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
+                        .ToListAsync();
+
+                    foreach (var order in currentUnpaidOrders)
                     {
                         order.TrangThaiOrder = OrderWorkflowConstants.TrangThaiOrderDaHuy;
+                        order.TrangThaiThanhToan = OrderWorkflowConstants.TrangThaiOrderDaHuy;
                         order.GhiChu = string.IsNullOrWhiteSpace(order.GhiChu)
                             ? "[Hủy do khôi phục bàn]"
                             : order.GhiChu + " [Hủy do khôi phục bàn]";
@@ -348,9 +351,16 @@ public class BanController : BaseController
             }
             else
             {
+                var unpaidOrders = await _context.HoaDons
+                    .Where(x => x.MaBan == table.MaBan
+                        && x.TrangThaiOrder != OrderWorkflowConstants.TrangThaiOrderDaHuy
+                        && x.TrangThaiThanhToan != OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
+                    .ToListAsync();
+
                 foreach (var order in unpaidOrders)
                 {
                     order.TrangThaiOrder = OrderWorkflowConstants.TrangThaiOrderDaHuy;
+                    order.TrangThaiThanhToan = OrderWorkflowConstants.TrangThaiOrderDaHuy;
                     order.GhiChu = string.IsNullOrWhiteSpace(order.GhiChu)
                         ? "[Hủy do khôi phục bàn]"
                         : order.GhiChu + " [Hủy do khôi phục bàn]";

@@ -1,4 +1,4 @@
-﻿@using System.Globalization
+@using System.Globalization
 @using WebQLCHCF.Services
 @model OrderReceiptViewModel
 
@@ -291,7 +291,7 @@
                 </div>
             }
 
-            @if (Model.CanEditOrder || Model.CanCancelOrder)
+            @if (Model.CanEditOrder || Model.CanCancelOrder || (Model.TrangThaiThanhToan == WebQLCHCF.Services.OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan && Model.TrangThaiOrder != WebQLCHCF.Services.OrderWorkflowConstants.TrangThaiOrderDaHuy && User.IsInRole(WebQLCHCF.Security.AppRoles.QuanLy)))
             {
                 <div class="d-flex gap-2 flex-wrap">
                     @if (Model.CanEditOrder)
@@ -312,6 +312,19 @@
                             <button type="submit" class="btn btn-outline-danger rounded-pill"
                                     onclick="return confirm('Hủy order chưa thanh toán và trả bàn về Trống nếu là đơn tại quán?');">
                                 <i class="bi bi-x-circle me-1"></i> Hủy order
+                            </button>
+                        </form>
+                    }
+                    @if (Model.TrangThaiThanhToan == WebQLCHCF.Services.OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan
+                        && Model.TrangThaiOrder != WebQLCHCF.Services.OrderWorkflowConstants.TrangThaiOrderDaHuy
+                        && User.IsInRole(WebQLCHCF.Security.AppRoles.QuanLy))
+                    {
+                        <form asp-action="RefundOrder" asp-route-id="@Model.MaHD" method="post" data-no-pjax="true" class="d-flex gap-2 flex-wrap">
+                            @Html.AntiForgeryToken()
+                            <input name="lyDo" class="form-control form-control-sm rounded-pill" style="max-width: 260px;" placeholder="Lý do hoàn đơn" required />
+                            <button type="submit" class="btn btn-danger rounded-pill"
+                                    onclick="return confirm('Quản lý xác nhận HOÀN ĐƠN và HỦY THANH TOÁN? Nguyên liệu sẽ được hoàn kho và điểm tích lũy sẽ được khấu trừ lại.');">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Hoàn đơn / Hủy thanh toán
                             </button>
                         </form>
                     }

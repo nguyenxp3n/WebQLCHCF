@@ -553,6 +553,44 @@ public class InMemoryOrderServiceDouble : IOrderService
         });
     }
 
+    public Task<PaymentCommandResultViewModel> RefundOrderAsync(string maHD, string lyDo)
+    {
+        if (string.IsNullOrWhiteSpace(lyDo))
+            throw new InvalidOperationException("Vui lòng nhập lý do hoàn đơn / hủy thanh toán.");
+
+        if (!Invoices.TryGetValue(maHD, out var hd))
+            return Task.FromResult(new PaymentCommandResultViewModel { Success = false, Message = "Hóa đơn không tồn tại." });
+
+        if (hd.TrangThaiThanhToan != "DaThanhToan")
+            throw new InvalidOperationException("Chỉ hóa đơn đã thanh toán mới có thể thực hiện hoàn đơn.");
+
+        if (!string.IsNullOrEmpty(hd.MaKH) && PointsAwardedByInvoice.TryGetValue(maHD, out var points))
+        {
+            var customer = Customers.FirstOrDefault(c => c.MaKH == hd.MaKH);
+            if (customer != null)
+            {
+                customer.DiemTichLuy = Math.Max(0, (customer.DiemTichLuy ?? 0) - points);
+            }
+        }
+
+        hd.TrangThaiOrder = "DaHuy";
+        hd.TrangThaiThanhToan = "DaHuy";
+        hd.GhiChu = string.IsNullOrEmpty(hd.GhiChu) ? $"Hoàn đơn: {lyDo}" : $"{hd.GhiChu} | Hoàn đơn: {lyDo}";
+
+        return Task.FromResult(new PaymentCommandResultViewModel
+        {
+            Success = true,
+            MaHD = maHD,
+            MaBan = hd.MaBan,
+            Message = "Hoàn đơn và hủy thanh toán thành công."
+        });
+    }
+
+    public Task<int> ReconcilePendingPostPaymentAsync(string? maHD = null)
+    {
+        return Task.FromResult(0);
+    }
+
     public Task<PaymentCommandResultViewModel> EditOrderAsync(string maHD)
     {
         if (!Invoices.TryGetValue(maHD, out var hd))

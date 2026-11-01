@@ -281,6 +281,7 @@ CREATE TABLE [dbo].[HoaDon](
 	[ThoiGianThanhToan] [datetime2](0) NULL,
 	[ClientRequestId] [varchar](36) NULL,
 	[DaTruKho] [bit] NOT NULL CONSTRAINT [DF_HoaDon_DaTruKho] DEFAULT ((0)),
+	[DaCongDiem] [bit] NOT NULL CONSTRAINT [DF_HoaDon_DaCongDiem] DEFAULT ((0)),
  CONSTRAINT [PK_HoaDon] PRIMARY KEY CLUSTERED 
 (
 	[MaHD] ASC
@@ -293,6 +294,39 @@ CREATE UNIQUE NONCLUSTERED INDEX [UX_HoaDon_ClientRequestId] ON [dbo].[HoaDon]
 )
 WHERE ([ClientRequestId] IS NOT NULL)
 WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[LichSuTruKho] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[LichSuTruKho](
+	[MaLichSu] [int] IDENTITY(1,1) NOT NULL,
+	[MaHD] [varchar](9) NOT NULL,
+	[MaNL] [varchar](5) NOT NULL,
+	[SoLuongTruThucTe] [int] NOT NULL,
+	[ThoiGianTru] [datetime2](7) NOT NULL CONSTRAINT [DF_LichSuTruKho_ThoiGianTru] DEFAULT (sysutcdatetime()),
+ CONSTRAINT [PK_LichSuTruKho] PRIMARY KEY CLUSTERED 
+(
+	[MaLichSu] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX [IX_LichSuTruKho_MaHD] ON [dbo].[LichSuTruKho]
+(
+	[MaHD] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[LichSuTruKho]  WITH CHECK ADD  CONSTRAINT [FK_LichSuTruKho_HoaDon] FOREIGN KEY([MaHD])
+REFERENCES [dbo].[HoaDon] ([MaHD])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[LichSuTruKho] CHECK CONSTRAINT [FK_LichSuTruKho_HoaDon]
+GO
+ALTER TABLE [dbo].[LichSuTruKho]  WITH CHECK ADD  CONSTRAINT [FK_LichSuTruKho_NguyenLieu] FOREIGN KEY([MaNL])
+REFERENCES [dbo].[NguyenLieu] ([MaNL])
+GO
+ALTER TABLE [dbo].[LichSuTruKho] CHECK CONSTRAINT [FK_LichSuTruKho_NguyenLieu]
 GO
 /****** Object:  Table [dbo].[KhachHang]    Script Date: 05/30/2026 11:12:09 AM ******/
 SET ANSI_NULLS ON
@@ -2479,8 +2513,47 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   PROC [dbo].[CTHD_Sua] @MaHD varchar(9), @MaSP varchar(5), @SoLuong int, @DonGia money, @MaKM varchar(5)=NULL AS
-BEGIN SET NOCOUNT ON; UPDATE CTHD SET SoLuong=@SoLuong,DonGia=@DonGia,MaKM=@MaKM WHERE MaHD=@MaHD AND MaSP=@MaSP; EXEC HoaDon_CapNhatTongTien @MaHD; END;
+CREATE   PROC [dbo].[CTHD_Sua]
+    @MaHD varchar(9),
+    @MaSP varchar(5),
+    @SoLuong int,
+    @DonGia money,
+    @MaKM varchar(5) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @TrangThaiOrder nvarchar(30), @TrangThaiThanhToan nvarchar(30);
+        SELECT @TrangThaiOrder = TrangThaiOrder, @TrangThaiThanhToan = TrangThaiThanhToan 
+        FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK)
+        WHERE MaHD = @MaHD;
+
+        IF @TrangThaiOrder IS NULL
+        BEGIN
+            THROW 50001, N'Hóa don không t?n t?i.', 1;
+        END
+
+        IF @TrangThaiOrder = N'DaHuy' OR @TrangThaiThanhToan = N'DaThanhToan' OR @TrangThaiThanhToan = N'ChoThanhToanQR'
+        BEGIN
+            THROW 50006, N'Hóa don dã thanh toán ho?c dã h?y, không th? ch?nh s?a chi ti?t món.', 1;
+        END
+
+        UPDATE CTHD 
+        SET SoLuong = @SoLuong, DonGia = @DonGia, MaKM = @MaKM 
+        WHERE MaHD = @MaHD AND MaSP = @MaSP;
+
+        EXEC HoaDon_CapNhatTongTien @MaHD;
+
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+        THROW;
+    END CATCH
+END;
 
 
 
@@ -3597,7 +3670,8 @@ GO
    ========================================================= */
 CREATE   PROC [dbo].[ThanhToan_HuyOrder]
     @MaHD varchar(9),
-    @LyDo nvarchar(255) = NULL
+    @LyDo nvarchar(255) = NULL,
+    @ChoPhepKhiDaThanhToan bit = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -3617,10 +3691,72 @@ BEGIN
 
     IF @MaBan IS NULL
     BEGIN
-        RAISERROR(N'HÃ³a Ä‘Æ¡n khÃ´ng tá»“n táº¡i.', 16, 1);
+        RAISERROR(N'Hóa don không t?n t?i.', 16, 1);
         ROLLBACK TRANSACTION;
         RETURN;
     END;
+
+    IF @TrangThaiThanhToan = N'DaThanhToan' AND @ChoPhepKhiDaThanhToan = 0
+    BEGIN
+        RAISERROR(N'Hóa don dã thanh toán, không du?c h?y.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+
+    IF @TrangThaiThanhToan = N'DaThanhToan' AND @ChoPhepKhiDaThanhToan = 1
+    BEGIN
+        UPDATE dbo.ThanhToan
+        SET TrangThai = N'DaHuy',
+            GhiChu = LEFT(CONCAT(ISNULL(GhiChu, N''), N' | Qu?n lý hoàn don/h?y thanh toán. ', ISNULL(@LyDo, N'')), 255)
+        WHERE MaHD = @MaHD AND TrangThai = N'DaThanhToan';
+
+        UPDATE dbo.HoaDon
+        SET TrangThaiOrder = N'DaHuy',
+            TrangThaiThanhToan = N'DaHuy',
+            GhiChu = LEFT(CONCAT(ISNULL(GhiChu, N''), N' | Qu?n lý hoàn don: ', ISNULL(@LyDo, N'Không có')), 100)
+        WHERE MaHD = @MaHD;
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.ThanhToan
+        SET TrangThai = N'DaHuy',
+            GhiChu = LEFT(CONCAT(ISNULL(GhiChu, N''), N' | H?y order. ', ISNULL(@LyDo, N'')), 255)
+        WHERE MaHD = @MaHD
+          AND TrangThai IN (N'ChuaThanhToan', N'ChoThanhToanQR', N'HetHan', N'ChoKiemTra');
+
+        UPDATE dbo.HoaDon
+        SET TrangThaiOrder = N'DaHuy',
+            TrangThaiThanhToan = N'DaHuy',
+            GhiChu = LEFT(CONCAT(ISNULL(GhiChu, N''), N' | Lý do h?y: ', ISNULL(@LyDo, N'Không có')), 100)
+        WHERE MaHD = @MaHD;
+    END;
+
+    IF @MaBan IS NOT NULL AND @MaBan <> 'MVE'
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 
+            FROM dbo.HoaDon 
+            WHERE MaBan = @MaBan 
+              AND MaHD <> @MaHD 
+              AND TrangThaiOrder <> N'DaHuy' 
+              AND TrangThaiThanhToan <> N'DaThanhToan'
+        )
+        BEGIN
+            UPDATE dbo.Ban
+            SET TrangThai = N'Tr?ng'
+            WHERE MaBan = @MaBan;
+        END;
+    END;
+
+    COMMIT TRANSACTION;
+
+    SELECT 
+        1 AS Success, 
+        CASE 
+            WHEN @TrangThaiThanhToan = N'DaThanhToan' THEN N'Hoàn don và h?y thanh toán thành công.'
+            ELSE N'H?y order thành công.'
+        END AS Message;
+END;
 
     IF @TrangThaiThanhToan = N'DaThanhToan'
     BEGIN

@@ -276,6 +276,33 @@ public class OrderController : BaseController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
+    public async Task<IActionResult> RefundOrder(string id, string lyDo)
+    {
+        try
+        {
+            var result = await _orderService.RefundOrderAsync(id, lyDo);
+            if (result.Success)
+            {
+                await _auditLogService.LogAsync(
+                    "Order",
+                    "Hoàn đơn / Hủy thanh toán",
+                    "HoaDon",
+                    id,
+                    $"Quản lý hoàn hóa đơn {id}. Lý do: {lyDo.Trim()}."
+                );
+            }
+            TempData[result.Success ? "Success" : "Error"] = result.Message;
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "Không thể hoàn đơn: " + FriendlyControllerError(ex);
+        }
+
+        return RedirectToAction(nameof(Receipt), new { id });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> EditOrder(string id)
     {
         try

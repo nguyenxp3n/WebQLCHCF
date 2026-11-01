@@ -18,7 +18,7 @@ public class HoaDon
     public string? MaKH { get; set; }
 
     [Column(TypeName = "money")]
-    public decimal TongTien { get; private set; }
+    public decimal TongTien { get; set; }
 
     [StringLength(100)]
     public string? GhiChu { get; set; }
@@ -43,4 +43,6 @@ public class HoaDon
     public string? ClientRequestId { get; set; }
 
     public bool DaTruKho { get; set; } = false;
+
+    public bool DaCongDiem { get; set; } = false;
 }

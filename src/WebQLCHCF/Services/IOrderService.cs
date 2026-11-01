@@ -17,6 +17,8 @@ public interface IOrderService
     Task<PaymentCommandResultViewModel> ConfirmQrDemoAsync(string maHD, string maPhienThanhToan);
     Task<PaymentCommandResultViewModel> ExpireQrAsync(string maHD);
     Task<PaymentCommandResultViewModel> CancelOrderAsync(string maHD, string lyDo);
+    Task<PaymentCommandResultViewModel> RefundOrderAsync(string maHD, string lyDo);
+    Task<int> ReconcilePendingPostPaymentAsync(string? maHD = null);
     Task<PaymentCommandResultViewModel> EditOrderAsync(string maHD);
     Task<PaymentCommandResultViewModel> ProcessExpiredQrAsync();
     Task<List<OrderCustomerViewModel>> SearchCustomersAsync(string keyword);

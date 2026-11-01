@@ -14,7 +14,7 @@ public class OrderConcurrencyAndIdempotencyTests
     {
         return Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
             ?? Environment.GetEnvironmentVariable("TEST_SQLSERVER_CONNECTION")
-            ?? "Server=localhost,14334;Database=QLCHCF;User Id=sa;Password=Password@123;TrustServerCertificate=True;Encrypt=False;Connect Timeout=3;";
+            ?? "Server=127.0.0.1,14334;Database=QLCHCF;User Id=sa;Password=Password@123;TrustServerCertificate=True;Encrypt=False;Connect Timeout=10;";
     }
 
     #region 1. ClientRequestId Validation & Normalization Tests
