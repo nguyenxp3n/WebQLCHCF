@@ -38,4 +38,7 @@ public class HoaDon
     public DateTime ThoiGianTao { get; set; }
 
     public DateTime? ThoiGianThanhToan { get; set; }
+
+    [StringLength(36)]
+    public string? ClientRequestId { get; set; }
 }

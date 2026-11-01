@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using WebQLCHCF.Controllers;
 using WebQLCHCF.Data;
+using WebQLCHCF.Models;
 using WebQLCHCF.ViewModels;
 
 namespace WebQLCHCF.Services;
@@ -213,27 +214,47 @@ public class OrderService : IOrderService
             maKh = customerExists ? model.MaKH : null;
         }
 
-        var requestId = !string.IsNullOrWhiteSpace(model.ClientRequestId)
-            ? model.ClientRequestId.Trim()
-            : Guid.NewGuid().ToString("N")[..12];
-        var tokenTag = $"[req:{requestId}]";
-        var noteWithToken = BuildGhiChuWithToken(model.GhiChu, requestId);
+        var clientRequestId = NormalizeClientRequestId(model.ClientRequestId);
 
         var strategy = _context.Database.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
         {
-            // Exact Idempotency Verification: Check if an invoice with THIS specific request token was already committed.
-            // This prevents duplicate orders on retry, and NEVER incorrectly picks up another concurrent request's invoice.
+            // Tier 1: Fast-path idempotency check outside transaction (handles fast retries without locking overhead)
             var committedInvoice = await _context.HoaDons.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.GhiChu != null && x.GhiChu.Contains(tokenTag));
+                .FirstOrDefaultAsync(x => x.ClientRequestId == clientRequestId);
             if (committedInvoice != null)
             {
                 return committedInvoice.MaHD;
             }
 
-            await using var tx = await _context.Database.BeginTransactionAsync();
+            var tx = _context.Database.IsRelational() ? await _context.Database.BeginTransactionAsync() : null;
             try
             {
+                // Tier 2: Double-Checked Locking inside transaction with UPDLOCK, HOLDLOCK
+                // Prevents TOCTOU race conditions when 2 concurrent requests with identical token pass Tier 1 simultaneously
+                if (_context.Database.IsRelational())
+                {
+                    var existingInTx = await _context.HoaDons
+                        .FromSqlInterpolated($"SELECT * FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK) WHERE ClientRequestId = {clientRequestId}")
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync();
+
+                    if (existingInTx != null)
+                    {
+                        if (tx != null) await tx.CommitAsync();
+                        return existingInTx.MaHD;
+                    }
+                }
+                else
+                {
+                    var existingInMemory = await _context.HoaDons.AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.ClientRequestId == clientRequestId);
+                    if (existingInMemory != null)
+                    {
+                        return existingInMemory.MaHD;
+                    }
+                }
+
                 var maBan = await ResolveTableAsync(model);
 
                 // Concurrency & Sequence: Lock range using UPDLOCK, HOLDLOCK so concurrent requests get sequential numbers
@@ -245,6 +266,10 @@ public class OrderService : IOrderService
                         .SqlQueryRaw<int?>("SELECT MAX(TRY_CONVERT(int, RIGHT(MaHD, 3))) AS Value FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK) WHERE MaHD LIKE {0}", prefix + "%")
                         .FirstOrDefaultAsync() ?? 0;
                     maHD = $"{prefix}{(maxNumber + 1):D3}";
+
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"EXEC HoaDon_Them {maHD}, {DateTime.Today}, {maNV}, {maKh}, {model.GhiChu}, {maBan}, {clientRequestId}"
+                    );
                 }
                 else
                 {
@@ -252,11 +277,23 @@ public class OrderService : IOrderService
                         _context.HoaDons.Select(x => x.MaHD),
                         DateTime.Today
                     );
-                }
 
-                await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC HoaDon_Them {maHD}, {DateTime.Today}, {maNV}, {maKh}, {noteWithToken}, {maBan}"
-                );
+                    var hoaDon = new HoaDon
+                    {
+                        MaHD = maHD,
+                        NgayLap = DateTime.Today,
+                        MaNV = maNV,
+                        MaKH = maKh,
+                        GhiChu = model.GhiChu,
+                        MaBan = maBan,
+                        ClientRequestId = clientRequestId,
+                        ThoiGianTao = DateTime.Now,
+                        TrangThaiOrder = OrderWorkflowConstants.TrangThaiOrderChoThanhToan,
+                        TrangThaiThanhToan = OrderWorkflowConstants.TrangThaiThanhToanChuaThanhToan
+                    };
+                    _context.HoaDons.Add(hoaDon);
+                    await _context.SaveChangesAsync();
+                }
 
                 foreach (var item in orderItems)
                 {
@@ -274,21 +311,49 @@ public class OrderService : IOrderService
 
                     var maKM = await ResolveActivePromotionAsync(item.MaKM);
 
-                    await _context.Database.ExecuteSqlInterpolatedAsync(
-                        $"EXEC CTHD_Them {maHD}, {product.MaSP}, {item.SoLuong}, {product.DonGia}, {maKM}"
-                    );
+                    if (_context.Database.IsRelational())
+                    {
+                        await _context.Database.ExecuteSqlInterpolatedAsync(
+                            $"EXEC CTHD_Them {maHD}, {product.MaSP}, {item.SoLuong}, {product.DonGia}, {maKM}"
+                        );
+                    }
+                    else
+                    {
+                        _context.CTHDs.Add(new CTHD
+                        {
+                            MaHD = maHD,
+                            MaSP = product.MaSP,
+                            SoLuong = item.SoLuong,
+                            DonGia = product.DonGia,
+                            MaKM = maKM
+                        });
+                        await _context.SaveChangesAsync();
+                    }
                 }
 
                 if (model.HinhThuc == OrderWorkflowConstants.HinhThucTaiQuan)
                     await UpdateTableStatusAsync(maBan, OrderWorkflowConstants.TrangThaiBanDangPhucVu);
 
-                await tx.CommitAsync();
+                if (tx != null) await tx.CommitAsync();
                 return maHD;
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) when (ex.InnerException?.Message.Contains("UX_HoaDon_ClientRequestId") == true || ex.Message.Contains("UX_HoaDon_ClientRequestId"))
+            {
+                // Tier 3: Physical Database Unique Index guard
+                if (tx != null) await tx.RollbackAsync();
+                var existing = await _context.HoaDons.AsNoTracking().FirstOrDefaultAsync(x => x.ClientRequestId == clientRequestId);
+                if (existing != null)
+                    return existing.MaHD;
+                throw;
             }
             catch
             {
-                await tx.RollbackAsync();
+                if (tx != null) await tx.RollbackAsync();
                 throw;
+            }
+            finally
+            {
+                if (tx != null) await tx.DisposeAsync();
             }
         });
     }
@@ -495,6 +560,12 @@ public class OrderService : IOrderService
 
     public async Task<bool> IsEmployeeCheckedInAsync(string maNV)
     {
+        if (!_context.Database.IsRelational())
+        {
+            return await _context.ChamCongs.AsNoTracking()
+                .AnyAsync(x => x.MaNV == maNV && x.ThoiGianCheckOut == null);
+        }
+
         try
         {
             return (
@@ -778,6 +849,21 @@ public class OrderService : IOrderService
             throw new InvalidOperationException(result.Message);
     }
 
+    public static string NormalizeClientRequestId(string? rawRequestId)
+    {
+        if (string.IsNullOrWhiteSpace(rawRequestId))
+            return Guid.NewGuid().ToString("D");
+
+        var trimmed = rawRequestId.Trim().Trim('{', '}');
+        if (trimmed.Length > 36)
+            throw new InvalidOperationException($"ClientRequestId không hợp lệ (vượt quá 36 ký tự): {rawRequestId.Trim()}");
+
+        if (!Guid.TryParse(trimmed, out var guid))
+            throw new InvalidOperationException($"ClientRequestId không hợp lệ (không đúng định dạng UUID): {rawRequestId.Trim()}");
+
+        return guid.ToString("D");
+    }
+
     public static string StripRequestToken(string? ghiChu)
     {
         if (string.IsNullOrWhiteSpace(ghiChu))
@@ -792,16 +878,20 @@ public class OrderService : IOrderService
 
     public static string BuildGhiChuWithToken(string? userNote, string requestId)
     {
-        var tokenTag = $"[req:{requestId}]";
+        if (string.IsNullOrWhiteSpace(requestId))
+            throw new ArgumentException("RequestId cannot be empty", nameof(requestId));
+
+        var safeRequestId = requestId.Length > 36 ? requestId[..36] : requestId;
+        var tokenTag = $"[req:{safeRequestId}]";
         if (string.IsNullOrWhiteSpace(userNote))
             return tokenTag;
 
         var clean = StripRequestToken(userNote);
-        var maxUserLength = 100 - tokenTag.Length - 1;
+        var maxUserLength = Math.Max(0, 100 - tokenTag.Length - 1);
         if (clean.Length > maxUserLength)
             clean = clean[..maxUserLength];
 
-        return $"{clean} {tokenTag}".Trim();
+        return string.IsNullOrWhiteSpace(clean) ? tokenTag : $"{clean} {tokenTag}".Trim();
     }
 
     private static bool IsPayable(string trangThaiOrder, string trangThaiThanhToan) =>
@@ -961,9 +1051,20 @@ public class OrderService : IOrderService
 
     private async Task<OrderTableViewModel?> GetNextAvailableTableAsync(string khuVuc)
     {
-        var table = await _context.Bans
-            .FromSqlInterpolated($"SELECT TOP 1 * FROM dbo.Ban WITH (UPDLOCK, HOLDLOCK) WHERE MaBan <> {OrderWorkflowConstants.MaBanMangVe} AND KhuVuc = {khuVuc} AND TrangThai = {OrderWorkflowConstants.TrangThaiBanTrong} ORDER BY SoBan, MaBan, TenBan")
-            .FirstOrDefaultAsync();
+        Ban? table;
+        if (_context.Database.IsRelational())
+        {
+            table = await _context.Bans
+                .FromSqlInterpolated($"SELECT TOP 1 * FROM dbo.Ban WITH (UPDLOCK, HOLDLOCK) WHERE MaBan <> {OrderWorkflowConstants.MaBanMangVe} AND KhuVuc = {khuVuc} AND TrangThai = {OrderWorkflowConstants.TrangThaiBanTrong} ORDER BY SoBan, MaBan, TenBan")
+                .FirstOrDefaultAsync();
+        }
+        else
+        {
+            table = await _context.Bans
+                .Where(x => x.MaBan != OrderWorkflowConstants.MaBanMangVe && x.KhuVuc == khuVuc && x.TrangThai == OrderWorkflowConstants.TrangThaiBanTrong)
+                .OrderBy(x => x.SoBan).ThenBy(x => x.MaBan).ThenBy(x => x.TenBan)
+                .FirstOrDefaultAsync();
+        }
 
         if (table == null)
             return null;

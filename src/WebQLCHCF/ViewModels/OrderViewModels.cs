@@ -1,9 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace WebQLCHCF.ViewModels;
 
 public class OrderCreateViewModel
 {
     public string? EditMaHD { get; set; }
     public bool IsEditing => !string.IsNullOrWhiteSpace(EditMaHD);
+    [StringLength(36)]
     public string? ClientRequestId { get; set; }
     public string HinhThuc { get; set; } = "TaiQuan";
     public string KhuVuc { get; set; } = "Tầng trệt";

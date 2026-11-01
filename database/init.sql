@@ -279,11 +279,19 @@ CREATE TABLE [dbo].[HoaDon](
 	[PhuongThucThanhToan] [nvarchar](30) NULL,
 	[ThoiGianTao] [datetime2](0) NOT NULL,
 	[ThoiGianThanhToan] [datetime2](0) NULL,
+	[ClientRequestId] [varchar](36) NULL,
  CONSTRAINT [PK_HoaDon] PRIMARY KEY CLUSTERED 
 (
 	[MaHD] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [UX_HoaDon_ClientRequestId] ON [dbo].[HoaDon]
+(
+	[ClientRequestId] ASC
+)
+WHERE ([ClientRequestId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[KhachHang]    Script Date: 05/30/2026 11:12:09 AM ******/
 SET ANSI_NULLS ON
@@ -2626,11 +2634,21 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   PROC [dbo].[HoaDon_Them] @MaHD varchar(9)=NULL, @NgayLap date, @MaNV varchar(5), @MaKH varchar(5)=NULL, @GhiChu nvarchar(100)=NULL, @MaBan varchar(5) AS
+CREATE   PROC [dbo].[HoaDon_Them] @MaHD varchar(9)=NULL, @NgayLap date, @MaNV varchar(5), @MaKH varchar(5)=NULL, @GhiChu nvarchar(100)=NULL, @MaBan varchar(5), @ClientRequestId varchar(36)=NULL AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     BEGIN TRY
         BEGIN TRAN;
+        IF @ClientRequestId IS NOT NULL AND LTRIM(RTRIM(@ClientRequestId)) <> ''
+        BEGIN
+            DECLARE @ExistingMaHD varchar(9);
+            SELECT @ExistingMaHD = MaHD FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK) WHERE ClientRequestId = @ClientRequestId;
+            IF @ExistingMaHD IS NOT NULL
+            BEGIN
+                COMMIT;
+                RETURN;
+            END
+        END
         IF @MaHD IS NULL OR LTRIM(RTRIM(@MaHD))=''
         BEGIN
             DECLARE @Prefix varchar(6)=FORMAT(@NgayLap,'yyMMdd');
@@ -2638,7 +2656,7 @@ BEGIN
             SELECT @MaxNumber=MAX(TRY_CONVERT(int,RIGHT(MaHD,3))) FROM HoaDon WITH(UPDLOCK,HOLDLOCK) WHERE MaHD LIKE @Prefix + '%';
             SET @MaHD=dbo.fn_NextCode(@Prefix,@MaxNumber,3);
         END
-        INSERT INTO HoaDon(MaHD,NgayLap,MaNV,MaKH,TongTien,GhiChu,MaBan) VALUES(@MaHD,@NgayLap,@MaNV,@MaKH,0,@GhiChu,@MaBan);
+        INSERT INTO HoaDon(MaHD,NgayLap,MaNV,MaKH,TongTien,GhiChu,MaBan,ClientRequestId) VALUES(@MaHD,@NgayLap,@MaNV,@MaKH,0,@GhiChu,@MaBan,@ClientRequestId);
         COMMIT;
     END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH
 END;

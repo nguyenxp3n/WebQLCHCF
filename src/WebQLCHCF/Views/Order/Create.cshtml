@@ -50,7 +50,7 @@
 <form asp-action="Create" method="post" class="needs-validation order-form" novalidate data-no-pjax="true">
     @Html.AntiForgeryToken()
     <input asp-for="EditMaHD" type="hidden" />
-    <input asp-for="ClientRequestId" type="hidden" value="@(Model.ClientRequestId ?? Guid.NewGuid().ToString("N")[..12])" />
+    <input asp-for="ClientRequestId" type="hidden" value="@(Model.ClientRequestId ?? Guid.NewGuid().ToString("D"))" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 small"></div>
 
     <div class="order-workspace">
