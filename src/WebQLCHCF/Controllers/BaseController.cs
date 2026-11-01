@@ -14,9 +14,14 @@ public abstract class BaseController : Controller
         string fallback = "Không thể thực hiện thao tác. Vui lòng kiểm tra dữ liệu liên quan."
     )
     {
+        Console.WriteLine($"[CONTROLLER ERROR] {ex.GetType().FullName}: {ex.Message} | Inner: {ex.InnerException?.Message}");
+
         var message = ex.Message;
         if (string.IsNullOrWhiteSpace(message))
             return fallback;
+
+        if (ex is InvalidOperationException)
+            return message;
 
         if (message.Contains("Mật khẩu không đúng", StringComparison.OrdinalIgnoreCase))
             return "Mật khẩu không đúng.";
