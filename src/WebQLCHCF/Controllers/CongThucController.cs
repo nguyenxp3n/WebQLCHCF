@@ -15,6 +15,7 @@ public class CongThucController : BaseController
 
     public CongThucController(AppDbContext context) => _context = context;
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         ViewData["Title"] = "Công thức pha chế";
@@ -44,6 +45,7 @@ public class CongThucController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         await LoadDropdownsAsync();
@@ -64,6 +66,7 @@ public class CongThucController : BaseController
         return await SaveAsync(model, "Thêm công thức thành công.", nameof(Create));
     }
 
+    [HttpGet]
     public async Task<IActionResult> Edit(string? maSP)
     {
         if (string.IsNullOrWhiteSpace(maSP))
@@ -91,6 +94,7 @@ public class CongThucController : BaseController
         return await SaveAsync(model, "Cập nhật công thức thành công.", nameof(Edit));
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? maSP)
     {
         if (string.IsNullOrWhiteSpace(maSP))
@@ -100,6 +104,7 @@ public class CongThucController : BaseController
         return model == null ? NotFound() : View(model);
     }
 
+    [HttpGet]
     public async Task<IActionResult> Delete(string? maSP)
     {
         if (string.IsNullOrWhiteSpace(maSP))

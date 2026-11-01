@@ -112,6 +112,7 @@ public class TaiKhoanController : BaseController
         };
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetUi("Tài khoản");
@@ -132,6 +133,7 @@ public class TaiKhoanController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -155,6 +157,7 @@ public class TaiKhoanController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         SetUi("Thêm Tài khoản");
@@ -178,6 +181,13 @@ public class TaiKhoanController : BaseController
             2
         );
         ModelState.Remove("MaTK");
+        if (!PasswordPolicyValidator.ValidatePassword(model.MatKhau, model.MatKhau, model.TenDangNhap, out var errors))
+        {
+            foreach (var error in errors)
+            {
+                ModelState.AddModelError(nameof(model.MatKhau), error);
+            }
+        }
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -208,6 +218,7 @@ public class TaiKhoanController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Edit(string? id)
     {
         if (id == null)
@@ -241,13 +252,25 @@ public class TaiKhoanController : BaseController
         {
             return NotFound();
         }
+        var before = await _context.TaiKhoans.AsNoTracking().FirstOrDefaultAsync(x => x.MaTK == model.MaTK);
+        if (before == null || !string.Equals(model.MatKhau, before.MatKhau, StringComparison.Ordinal))
+        {
+            if (!PasswordPolicyValidator.ValidatePassword(model.MatKhau, model.MatKhau, model.TenDangNhap, out var errors))
+            {
+                foreach (var error in errors)
+                {
+                    ModelState.AddModelError(nameof(model.MatKhau), error);
+                }
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             return View(model);
         }
         try
         {
-            var before = await _context.TaiKhoans.AsNoTracking().FirstOrDefaultAsync(x => x.MaTK == model.MaTK);
+            before ??= await _context.TaiKhoans.AsNoTracking().FirstOrDefaultAsync(x => x.MaTK == model.MaTK);
             await _context.Database.ExecuteSqlInterpolatedAsync(
                 $"EXEC TaiKhoan_Sua {model.MaTK}, {model.TenDangNhap}, {model.MatKhau}, {model.MaNV}, {model.VaiTro}"
             );
@@ -268,6 +291,7 @@ public class TaiKhoanController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Delete(string? id)
     {
         if (id == null)

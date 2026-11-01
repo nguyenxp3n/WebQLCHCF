@@ -135,6 +135,7 @@ public class SanPhamController : BaseController
         };
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index(string? tuKhoa, string? maLoaiSP, string? trangThai)
     {
         SetUi("Sản phẩm");
@@ -183,6 +184,7 @@ public class SanPhamController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id, string? returnUrl = null)
     {
         if (id == null)
@@ -205,6 +207,7 @@ public class SanPhamController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         SetUi("Thêm Sản phẩm");
@@ -247,6 +250,7 @@ public class SanPhamController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Edit(string? id, string? returnUrl = null)
     {
         if (id == null)
@@ -313,6 +317,7 @@ public class SanPhamController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Delete(string? id, string? returnUrl = null)
     {
         if (id == null)

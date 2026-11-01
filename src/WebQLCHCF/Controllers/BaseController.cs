@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace WebQLCHCF.Controllers;
 
+[WebQLCHCF.Security.RoleAuthorize]
 public abstract class BaseController : Controller
 {
     protected static string FriendlyControllerError(
@@ -58,6 +62,18 @@ public abstract class BaseController : Controller
 
     public override void OnActionExecuting(ActionExecutingContext c)
     {
+        var hasAllowAnonymous =
+            c.ActionDescriptor.EndpointMetadata?.OfType<IAllowAnonymous>().Any() == true
+            || c.HttpContext.GetEndpoint()?.Metadata.OfType<IAllowAnonymous>().Any() == true
+            || c.Filters.Any(f => f is IAllowAnonymous)
+            || (c.ActionDescriptor is ControllerActionDescriptor cad && cad.MethodInfo.GetCustomAttributes(typeof(AllowAnonymousAttribute), true).Any());
+
+        if (hasAllowAnonymous)
+        {
+            base.OnActionExecuting(c);
+            return;
+        }
+
         if (string.IsNullOrEmpty(HttpContext.Session.GetString("MaTK")))
         {
             c.Result = RedirectToAction("Login", "Account");

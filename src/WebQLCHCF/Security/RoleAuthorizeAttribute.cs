@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace WebQLCHCF.Security;
@@ -17,6 +20,18 @@ public sealed class RoleAuthorizeAttribute : ActionFilterAttribute
 
     public override void OnActionExecuting(ActionExecutingContext context)
     {
+        var hasAllowAnonymous =
+            context.ActionDescriptor.EndpointMetadata?.OfType<IAllowAnonymous>().Any() == true
+            || context.HttpContext.GetEndpoint()?.Metadata.OfType<IAllowAnonymous>().Any() == true
+            || context.Filters.Any(f => f is IAllowAnonymous)
+            || (context.ActionDescriptor is ControllerActionDescriptor cad && cad.MethodInfo.GetCustomAttributes(typeof(AllowAnonymousAttribute), true).Any());
+
+        if (hasAllowAnonymous)
+        {
+            base.OnActionExecuting(context);
+            return;
+        }
+
         var session = context.HttpContext.Session;
         var maTK = session.GetString("MaTK");
         if (string.IsNullOrWhiteSpace(maTK))

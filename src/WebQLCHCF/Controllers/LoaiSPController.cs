@@ -94,6 +94,7 @@ public class LoaiSPController : BaseController
         ViewData["Labels"] = Labels;
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetUi("Loại sản phẩm");
@@ -112,6 +113,7 @@ public class LoaiSPController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -131,6 +133,7 @@ public class LoaiSPController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         SetUi("Thêm Loại sản phẩm");
@@ -169,6 +172,7 @@ public class LoaiSPController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Edit(string? id)
     {
         if (id == null)
@@ -211,6 +215,7 @@ public class LoaiSPController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Delete(string? id)
     {
         if (id == null)

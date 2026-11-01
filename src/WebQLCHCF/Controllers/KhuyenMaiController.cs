@@ -10,6 +10,7 @@ using WebQLCHCF.ViewModels;
 
 namespace WebQLCHCF.Controllers;
 
+[RoleAuthorize(AppRoles.QuanLy)]
 public class KhuyenMaiController : BaseController
 {
     private readonly AppDbContext _context;
@@ -142,6 +143,7 @@ public class KhuyenMaiController : BaseController
         ViewData["Labels"] = Labels;
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetUi("Khuyến mãi");
@@ -162,6 +164,7 @@ public class KhuyenMaiController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -183,6 +186,7 @@ public class KhuyenMaiController : BaseController
         }
     }
 
+    [HttpGet]
     [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Create()
     {
@@ -243,6 +247,7 @@ public class KhuyenMaiController : BaseController
         }
     }
 
+    [HttpGet]
     [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Edit(string? id)
     {
@@ -309,6 +314,7 @@ public class KhuyenMaiController : BaseController
         }
     }
 
+    [HttpGet]
     [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Delete(string? id)
     {
@@ -372,7 +378,8 @@ public class KhuyenMaiController : BaseController
         return model;
     }
 
-    private void ValidateGiaTri(KhuyenMai model)
+    [NonAction]
+    public void ValidateGiaTri(KhuyenMai model)
     {
         if (string.IsNullOrWhiteSpace(model.LoaiKM) || !LoaiKhuyenMaiHopLe.Contains(model.LoaiKM))
         {
@@ -400,6 +407,14 @@ public class KhuyenMaiController : BaseController
             ModelState.AddModelError(
                 nameof(model.GiaTri),
                 "Giá trị khuyến mãi tiền mặt không được vượt quá 100.000.000đ."
+            );
+        }
+
+        if (model.NgayBatDau > model.NgayKetThuc)
+        {
+            ModelState.AddModelError(
+                nameof(model.NgayKetThuc),
+                "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu."
             );
         }
     }

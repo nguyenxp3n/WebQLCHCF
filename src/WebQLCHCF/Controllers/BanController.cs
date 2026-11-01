@@ -5,9 +5,11 @@ using WebQLCHCF.Data;
 using WebQLCHCF.Models;
 using WebQLCHCF.Services;
 using WebQLCHCF.ViewModels;
+using WebQLCHCF.Security;
 
 namespace WebQLCHCF.Controllers;
 
+[RoleAuthorize(AppRoles.QuanLy, AppRoles.PhucVu)]
 public class BanController : BaseController
 {
     private readonly AppDbContext _context;
@@ -112,6 +114,7 @@ public class BanController : BaseController
         ViewData["Labels"] = Labels;
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetUi("Bàn");
@@ -130,6 +133,7 @@ public class BanController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -149,6 +153,8 @@ public class BanController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public IActionResult Create()
     {
         SetUi("Thêm Bàn", isCreate: true);
@@ -156,6 +162,7 @@ public class BanController : BaseController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Create(Ban model)
     {
         SetUi("Thêm Bàn", isCreate: true);
@@ -181,6 +188,8 @@ public class BanController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Edit(string? id)
     {
         if (id == null)
@@ -206,6 +215,7 @@ public class BanController : BaseController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Edit(string? id, Ban model)
     {
         SetUi("Sửa Bàn");
@@ -218,6 +228,22 @@ public class BanController : BaseController
         }
         if (!KhuVucHopLe.Contains(model.KhuVuc))
             ModelState.AddModelError(nameof(model.KhuVuc), "Khu vực chỉ được chọn Tầng trệt hoặc Tầng lửng.");
+
+        if (model.TrangThai == OrderWorkflowConstants.TrangThaiBanTrong)
+        {
+            var hasUnpaidOrder = await _context.HoaDons.AsNoTracking().AnyAsync(x =>
+                x.MaBan == model.MaBan
+                && x.TrangThaiOrder != OrderWorkflowConstants.TrangThaiOrderDaHuy
+                && x.TrangThaiThanhToan != OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan);
+
+            if (hasUnpaidOrder)
+            {
+                var errorMsg = "Bàn đang có hóa đơn chưa thanh toán, không thể chuyển về trạng thái Trống.";
+                ModelState.AddModelError(nameof(model.TrangThai), errorMsg);
+                TempData["Error"] = errorMsg;
+            }
+        }
+
         if (!ModelState.IsValid)
             return View(model);
         try
@@ -235,6 +261,8 @@ public class BanController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Delete(string? id)
     {
         if (id == null)
@@ -260,6 +288,7 @@ public class BanController : BaseController
     }
 
     [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> DeleteConfirmed(string? id)
     {
         if (id == null)

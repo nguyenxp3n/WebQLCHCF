@@ -1,4 +1,4 @@
-﻿USE [master]
+USE [master]
 GO
 
 /* =========================================================
@@ -1458,6 +1458,7 @@ CREATE   PROC [dbo].[Ban_KhachDi]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     IF @MaBan IS NULL OR LTRIM(RTRIM(@MaBan)) = ''
     BEGIN
@@ -1471,35 +1472,60 @@ BEGIN
         RETURN;
     END;
 
-    IF NOT EXISTS (SELECT 1 FROM dbo.Ban WHERE MaBan = @MaBan)
-    BEGIN
-        RAISERROR(N'Bàn không tồn tại.', 16, 1);
-        RETURN;
-    END;
+    BEGIN TRY
+        BEGIN TRAN;
 
-    IF EXISTS (
-        SELECT 1
-        FROM dbo.Ban
-        WHERE MaBan = @MaBan
-          AND TrangThai = N'Trống'
-    )
-    BEGIN
+        DECLARE @CurrentStatus nvarchar(30);
+
+        SELECT @CurrentStatus = TrangThai
+        FROM dbo.Ban WITH (UPDLOCK, HOLDLOCK)
+        WHERE MaBan = @MaBan;
+
+        IF @CurrentStatus IS NULL
+        BEGIN
+            RAISERROR(N'Bàn không tồn tại.', 16, 1);
+            ROLLBACK TRAN;
+            RETURN;
+        END;
+
+        IF @CurrentStatus = N'Trống'
+        BEGIN
+            COMMIT TRAN;
+            SELECT
+                CAST(0 AS bit) AS Success,
+                N'Bàn đã Trống, không cần trả bàn.' AS Message,
+                @MaBan AS MaBan;
+            RETURN;
+        END;
+
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK)
+            WHERE MaBan = @MaBan
+              AND TrangThaiOrder <> N'DaHuy'
+              AND TrangThaiThanhToan <> N'DaThanhToan'
+        )
+        BEGIN
+            RAISERROR(N'Bàn còn order chưa thanh toán, không thể trả bàn.', 16, 1);
+            ROLLBACK TRAN;
+            RETURN;
+        END;
+
+        UPDATE dbo.Ban
+        SET TrangThai = N'Trống'
+        WHERE MaBan = @MaBan;
+
+        COMMIT TRAN;
+
         SELECT
-            CAST(0 AS bit) AS Success,
-            N'Bàn đã Trống, không cần trả bàn.' AS Message,
+            CAST(1 AS bit) AS Success,
+            N'Khách đi, bàn đã được chuyển về Trống.' AS Message,
             @MaBan AS MaBan;
-        RETURN;
-    END;
-
-    UPDATE dbo.Ban
-    SET TrangThai = N'Trống'
-    WHERE MaBan = @MaBan
-      AND TrangThai = N'Đang phục vụ';
-
-    SELECT
-        CAST(1 AS bit) AS Success,
-        N'Khách đi, bàn đã được chuyển về Trống.' AS Message,
-        @MaBan AS MaBan;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+        THROW;
+    END CATCH;
 END
 
 GO
@@ -1576,6 +1602,19 @@ BEGIN
             SELECT @SoBanTam = ISNULL(MAX(SoBan), 0) + 1
             FROM dbo.Ban WITH (UPDLOCK, HOLDLOCK)
             WHERE MaBan <> 'MVE';
+        END;
+
+        IF @TrangThai = N'Trống' AND EXISTS (
+            SELECT 1
+            FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK)
+            WHERE MaBan = @MaBan
+              AND TrangThaiOrder <> N'DaHuy'
+              AND TrangThaiThanhToan <> N'DaThanhToan'
+        )
+        BEGIN
+            RAISERROR(N'Bàn đang có hóa đơn chưa thanh toán, không thể chuyển về trạng thái Trống.', 16, 1);
+            ROLLBACK TRAN;
+            RETURN;
         END;
 
         UPDATE dbo.Ban

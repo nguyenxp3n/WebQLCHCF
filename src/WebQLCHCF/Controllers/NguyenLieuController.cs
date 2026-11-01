@@ -130,6 +130,7 @@ public class NguyenLieuController : BaseController
         ViewData["Labels"] = Labels;
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetUi("Nguyên liệu");
@@ -150,6 +151,7 @@ public class NguyenLieuController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -171,6 +173,8 @@ public class NguyenLieuController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Create()
     {
         SetUi("Thêm Nguyên liệu");
@@ -183,6 +187,7 @@ public class NguyenLieuController : BaseController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Create(NguyenLieu model)
     {
         SetUi("Thêm Nguyên liệu");
@@ -209,6 +214,8 @@ public class NguyenLieuController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Edit(string? id)
     {
         if (id == null)
@@ -231,6 +238,7 @@ public class NguyenLieuController : BaseController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Edit(string? id, NguyenLieu model)
     {
         SetUi("Sửa Nguyên liệu");
@@ -253,6 +261,8 @@ public class NguyenLieuController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Delete(string? id)
     {
         if (id == null)
@@ -275,6 +285,7 @@ public class NguyenLieuController : BaseController
     }
 
     [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> DeleteConfirmed(string? id)
     {
         if (id == null)

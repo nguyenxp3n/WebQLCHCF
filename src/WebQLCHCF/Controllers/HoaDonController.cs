@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebQLCHCF.Data;
 using WebQLCHCF.Models;
+using WebQLCHCF.Security;
 using WebQLCHCF.Services;
 using WebQLCHCF.ViewModels;
 
 namespace WebQLCHCF.Controllers;
 
+[RoleAuthorize(AppRoles.QuanLy, AppRoles.PhucVu)]
 public class HoaDonController : BaseController
 {
     private const string TrangThaiDangBan = "Đang bán";
@@ -124,6 +126,7 @@ public class HoaDonController : BaseController
         return (true, product.DonGia);
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetHoaDonUi("Thêm hóa đơn");
@@ -144,6 +147,7 @@ public class HoaDonController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -236,6 +240,7 @@ public class HoaDonController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         SetHoaDonUi("Thêm hóa đơn");
@@ -276,10 +281,28 @@ public class HoaDonController : BaseController
         }
     }
 
+    private async Task<bool> IsHoaDonDaThanhToanAsync(string? maHD)
+    {
+        if (string.IsNullOrWhiteSpace(maHD))
+            return false;
+
+        return await _context.HoaDons.AsNoTracking()
+            .AnyAsync(x => x.MaHD == maHD && x.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan);
+    }
+
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Edit(string? id)
     {
         if (id == null)
             return NotFound();
+
+        if (await IsHoaDonDaThanhToanAsync(id))
+        {
+            TempData["Error"] = "Hóa đơn đã thanh toán, không thể chỉnh sửa.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         SetHoaDonUi("Thêm hóa đơn");
         await LoadHoaDonDropdownsAsync();
         var item = (
@@ -301,12 +324,20 @@ public class HoaDonController : BaseController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Edit(string? id, HoaDon model)
     {
         SetHoaDonUi("Thêm hóa đơn");
         await LoadHoaDonDropdownsAsync();
         if (id == null || id != model.MaHD)
             return NotFound();
+
+        if (await IsHoaDonDaThanhToanAsync(model.MaHD))
+        {
+            TempData["Error"] = "Hóa đơn đã thanh toán, không thể chỉnh sửa.";
+            return RedirectToAction(nameof(Details), new { id = model.MaHD });
+        }
+
         if (!ModelState.IsValid)
             return View(model);
         try
@@ -324,6 +355,8 @@ public class HoaDonController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Delete(string? id)
     {
         if (id == null)
@@ -336,6 +369,7 @@ public class HoaDonController : BaseController
     }
 
     [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> DeleteConfirmed(string? id)
     {
         if (id == null)
@@ -352,15 +386,30 @@ public class HoaDonController : BaseController
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> AddDetail(string maHD)
     {
+        if (await IsHoaDonDaThanhToanAsync(maHD))
+        {
+            TempData["Error"] = "Hóa đơn đã thanh toán, không thể thêm chi tiết.";
+            return RedirectToAction(nameof(Details), new { id = maHD });
+        }
+
         await LoadDetailDropdownsAsync();
         return View(new CTHD { MaHD = maHD });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> AddDetail(CTHD model)
     {
+        if (await IsHoaDonDaThanhToanAsync(model.MaHD))
+        {
+            TempData["Error"] = "Hóa đơn đã thanh toán, không thể thêm chi tiết.";
+            return RedirectToAction(nameof(Details), new { id = model.MaHD });
+        }
+
         await LoadDetailDropdownsAsync();
         if (!ModelState.IsValid)
             return View(model);
@@ -386,8 +435,16 @@ public class HoaDonController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> EditDetail(string maHD, string maSP)
     {
+        if (await IsHoaDonDaThanhToanAsync(maHD))
+        {
+            TempData["Error"] = "Hóa đơn đã thanh toán, không thể chỉnh sửa chi tiết.";
+            return RedirectToAction(nameof(Details), new { id = maHD });
+        }
+
         await LoadDetailDropdownsAsync(true);
         var item = (
             await _context
@@ -409,8 +466,15 @@ public class HoaDonController : BaseController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> EditDetail(CTHD model)
     {
+        if (await IsHoaDonDaThanhToanAsync(model.MaHD))
+        {
+            TempData["Error"] = "Hóa đơn đã thanh toán, không thể chỉnh sửa chi tiết.";
+            return RedirectToAction(nameof(Details), new { id = model.MaHD });
+        }
+
         await LoadDetailDropdownsAsync(true);
         if (!ModelState.IsValid)
             return View(model);
@@ -436,8 +500,16 @@ public class HoaDonController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> DeleteDetail(string maHD, string maSP)
     {
+        if (await IsHoaDonDaThanhToanAsync(maHD))
+        {
+            TempData["Error"] = "Hóa đơn đã thanh toán, không thể xóa chi tiết.";
+            return RedirectToAction(nameof(Details), new { id = maHD });
+        }
+
         ViewData["Title"] = "Xóa chi tiết hóa đơn";
         ViewData["Columns"] = new[]
         {
@@ -460,8 +532,15 @@ public class HoaDonController : BaseController
     }
 
     [HttpPost, ActionName("DeleteDetail"), ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> DeleteDetailConfirmed(string maHD, string maSP)
     {
+        if (await IsHoaDonDaThanhToanAsync(maHD))
+        {
+            TempData["Error"] = "Hóa đơn đã thanh toán, không thể xóa chi tiết.";
+            return RedirectToAction(nameof(Details), new { id = maHD });
+        }
+
         try
         {
             await _context.Database.ExecuteSqlInterpolatedAsync($"EXEC CTHD_Xoa {maHD}, {maSP}");

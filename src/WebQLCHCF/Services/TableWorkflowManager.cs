@@ -65,4 +65,60 @@ public static class TableWorkflowManager
         return string.Equals(trangThaiThanhToan, OrderWorkflowConstants.TrangThaiThanhToanChuaThanhToan, StringComparison.OrdinalIgnoreCase)
             || string.Equals(trangThaiThanhToan, OrderWorkflowConstants.TrangThaiThanhToanChoThanhToanQr, StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>
+    /// Kiểm tra hóa đơn đã thanh toán hay chưa.
+    /// </summary>
+    public static bool IsPaid(string? trangThaiThanhToan)
+    {
+        return string.Equals(trangThaiThanhToan?.Trim(), OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Kiểm tra xem hóa đơn có cho phép thêm chi tiết món hay không.
+    /// Hóa đơn đã thanh toán tuyệt đối bất biến, từ chối thêm chi tiết món mới.
+    /// </summary>
+    public static bool CanAddLineItem(string? trangThaiThanhToan, out string? reason)
+    {
+        if (IsPaid(trangThaiThanhToan))
+        {
+            reason = "Hóa đơn đã thanh toán, không thể thêm chi tiết.";
+            return false;
+        }
+
+        reason = null;
+        return true;
+    }
+
+    /// <summary>
+    /// Kiểm tra xem hóa đơn có cho phép chỉnh sửa chi tiết món hay không.
+    /// Hóa đơn đã thanh toán tuyệt đối bất biến, từ chối chỉnh sửa chi tiết món.
+    /// </summary>
+    public static bool CanEditLineItem(string? trangThaiThanhToan, out string? reason)
+    {
+        if (IsPaid(trangThaiThanhToan))
+        {
+            reason = "Hóa đơn đã thanh toán, không thể chỉnh sửa chi tiết.";
+            return false;
+        }
+
+        reason = null;
+        return true;
+    }
+
+    /// <summary>
+    /// Kiểm tra xem hóa đơn có cho phép xóa chi tiết món hay không.
+    /// Hóa đơn đã thanh toán tuyệt đối bất biến, từ chối xóa chi tiết món.
+    /// </summary>
+    public static bool CanDeleteLineItem(string? trangThaiThanhToan, out string? reason)
+    {
+        if (IsPaid(trangThaiThanhToan))
+        {
+            reason = "Hóa đơn đã thanh toán, không thể xóa chi tiết.";
+            return false;
+        }
+
+        reason = null;
+        return true;
+    }
 }

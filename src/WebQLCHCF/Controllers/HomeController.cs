@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebQLCHCF.Models;
 using WebQLCHCF.Security;
@@ -15,6 +16,7 @@ public class HomeController : BaseController
     public HomeController(IDashboardService dashboardService) =>
         _dashboardService = dashboardService;
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         try
@@ -30,6 +32,8 @@ public class HomeController : BaseController
         }
     }
 
+    [HttpGet]
+    [AllowAnonymous]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error() =>
         View(

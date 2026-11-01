@@ -132,6 +132,7 @@ public class LuongController : BaseController
         ViewData["Labels"] = Labels;
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetUi("Lương");
@@ -150,6 +151,7 @@ public class LuongController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Thang(int? thang)
     {
         var selectedMonth = thang ?? DateTime.Today.Month;
@@ -201,6 +203,7 @@ public class LuongController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -220,6 +223,7 @@ public class LuongController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         SetUi("Thêm Lương");
@@ -254,6 +258,7 @@ public class LuongController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -296,6 +301,7 @@ public class LuongController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)

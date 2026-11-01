@@ -13,8 +13,10 @@ public class ThongKeController : BaseController
 
     public ThongKeController(AppDbContext context) => _context = context;
 
+    [HttpGet]
     public IActionResult Index() => RedirectToAction(nameof(DoanhThuTheoNgay));
 
+    [HttpGet]
     public async Task<IActionResult> DoanhThuTheoNgay(DateTime? tuNgay, DateTime? denNgay)
     {
         ViewData["Title"] = "Doanh thu theo ngày";
@@ -46,6 +48,7 @@ public class ThongKeController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> SanPhamBanChay()
     {
         ViewData["Title"] = "Sản phẩm bán chạy";
@@ -64,6 +67,7 @@ public class ThongKeController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> NhapHangTheoThang(int? thang, int? nam)
     {
         ViewData["Title"] = "Nhập hàng theo tháng";

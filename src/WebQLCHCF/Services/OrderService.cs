@@ -191,7 +191,6 @@ public class OrderService : IOrderService
         if (!orderItems.Any())
             throw new InvalidOperationException("Vui lòng chọn ít nhất 1 món.");
 
-        var maBan = await ResolveTableAsync(model);
         string? maKh = null;
         if (!string.IsNullOrWhiteSpace(model.MaKH))
         {
@@ -203,6 +202,7 @@ public class OrderService : IOrderService
         await using var tx = await _context.Database.BeginTransactionAsync();
         try
         {
+            var maBan = await ResolveTableAsync(model);
             await _context.Database.ExecuteSqlInterpolatedAsync(
                 $"EXEC HoaDon_Them {(string?)null}, {DateTime.Today}, {maNV}, {maKh}, {model.GhiChu}, {maBan}"
             );
@@ -240,9 +240,6 @@ public class OrderService : IOrderService
 
             if (model.HinhThuc == OrderWorkflowConstants.HinhThucTaiQuan)
                 await UpdateTableStatusAsync(maBan, OrderWorkflowConstants.TrangThaiBanDangPhucVu);
-
-            if (maKh != null)
-                await AddCustomerPointsAsync(maHD, maKh);
 
             await tx.CommitAsync();
             return maHD;
@@ -416,7 +413,9 @@ public class OrderService : IOrderService
             GhiChu = header.GhiChu,
             DiemDaCong = customer == null
                 ? null
-                : (int)Math.Floor(header.TongTien / 10000m),
+                : (trangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan
+                    ? (int)Math.Floor(header.TongTien / 10000m)
+                    : 0),
             TrangThaiOrder = trangThaiOrder,
             TrangThaiThanhToan = trangThaiThanhToan,
             PhuongThucThanhToan = hoaDon?.PhuongThucThanhToan,
@@ -480,11 +479,26 @@ public class OrderService : IOrderService
 
     public async Task<PaymentCommandResultViewModel> PayCashAsync(string maHD, string? ghiChu)
     {
-        return await ExecutePaymentProcedureAsync(
+        var result = await ExecutePaymentProcedureAsync(
             "ThanhToan_TienMat",
             ("@MaHD", maHD),
             ("@GhiChu", string.IsNullOrWhiteSpace(ghiChu) ? null : ghiChu.Trim())
         );
+
+        if (result.Success)
+        {
+            var invoice = await _context.HoaDons.AsNoTracking()
+                .Where(x => x.MaHD == maHD)
+                .Select(x => new { x.MaKH })
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrWhiteSpace(invoice?.MaKH))
+            {
+                await AddCustomerPointsAsync(maHD, invoice.MaKH);
+            }
+        }
+
+        return result;
     }
 
     public async Task<PaymentCommandResultViewModel> CreateQrPaymentAsync(string maHD)
@@ -516,13 +530,28 @@ public class OrderService : IOrderService
         var transactionCode = $"DEMO-{DateTime.Now:yyyyMMddHHmmssfff}-{payment.MaThanhToan}";
         var transferContent = payment.NoiDungChuyenKhoan ?? payment.MaPhienThanhToan ?? maPhienThanhToan;
 
-        return await ExecutePaymentProcedureAsync(
+        var result = await ExecutePaymentProcedureAsync(
             "ThanhToan_XacNhanQRTheoPhien",
             ("@MaGiaoDich", transactionCode),
             ("@MaPhienThanhToan", maPhienThanhToan),
             ("@SoTien", payment.SoTien),
             ("@NoiDungChuyenKhoan", transferContent)
         );
+
+        if (result.Success)
+        {
+            var invoice = await _context.HoaDons.AsNoTracking()
+                .Where(x => x.MaHD == maHD)
+                .Select(x => new { x.MaKH })
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrWhiteSpace(invoice?.MaKH))
+            {
+                await AddCustomerPointsAsync(maHD, invoice.MaKH);
+            }
+        }
+
+        return result;
     }
 
     public async Task<PaymentCommandResultViewModel> ExpireQrAsync(string maHD)
@@ -535,11 +564,26 @@ public class OrderService : IOrderService
         if (string.IsNullOrWhiteSpace(lyDo))
             throw new InvalidOperationException("Vui lòng nhập lý do hủy order.");
 
-        return await ExecutePaymentProcedureAsync(
+        var invoice = await _context.HoaDons.AsNoTracking()
+            .Where(x => x.MaHD == maHD)
+            .Select(x => new { x.MaKH, x.TrangThaiThanhToan })
+            .FirstOrDefaultAsync();
+
+        var result = await ExecutePaymentProcedureAsync(
             "ThanhToan_HuyOrder",
             ("@MaHD", maHD),
             ("@LyDo", lyDo.Trim())
         );
+
+        if (result.Success && !string.IsNullOrWhiteSpace(invoice?.MaKH))
+        {
+            if (invoice.TrangThaiThanhToan == OrderWorkflowConstants.TrangThaiThanhToanDaThanhToan)
+            {
+                await ReverseCustomerPointsAsync(maHD, invoice.MaKH);
+            }
+        }
+
+        return result;
     }
 
     public async Task<PaymentCommandResultViewModel> EditOrderAsync(string maHD)
@@ -775,23 +819,36 @@ public class OrderService : IOrderService
         return promotion.MaKM;
     }
 
-    private async Task AddCustomerPointsAsync(string maHD, string maKH)
+    public async Task AddCustomerPointsAsync(string maHD, string maKH)
     {
         var total = await _context.HoaDons.AsNoTracking()
             .Where(x => x.MaHD == maHD)
             .Select(x => x.TongTien)
             .FirstOrDefaultAsync();
 
-        var points = (int)Math.Floor(total / 10000m);
+        var points = CafeOrderCalculator.TinhDiemTichLuy(total);
         if (points <= 0)
             return;
 
-        var customer = await _context.KhachHangs.FirstOrDefaultAsync(x => x.MaKH == maKH);
-        if (customer == null)
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE dbo.KhachHang SET DiemTichLuy = ISNULL(DiemTichLuy, 0) + {points} WHERE MaKH = {maKH}"
+        );
+    }
+
+    public async Task ReverseCustomerPointsAsync(string maHD, string maKH)
+    {
+        var total = await _context.HoaDons.AsNoTracking()
+            .Where(x => x.MaHD == maHD)
+            .Select(x => x.TongTien)
+            .FirstOrDefaultAsync();
+
+        var points = CafeOrderCalculator.TinhDiemTichLuy(total);
+        if (points <= 0)
             return;
 
-        customer.DiemTichLuy = (customer.DiemTichLuy ?? 0) + points;
-        await _context.SaveChangesAsync();
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE dbo.KhachHang SET DiemTichLuy = CASE WHEN ISNULL(DiemTichLuy, 0) >= {points} THEN DiemTichLuy - {points} ELSE 0 END WHERE MaKH = {maKH}"
+        );
     }
 
     private async Task<string> ResolveTableAsync(OrderCreateViewModel model)
@@ -829,22 +886,20 @@ public class OrderService : IOrderService
 
     private async Task<OrderTableViewModel?> GetNextAvailableTableAsync(string khuVuc)
     {
-        return await _context.Bans.AsNoTracking()
-            .Where(x =>
-                x.MaBan != OrderWorkflowConstants.MaBanMangVe
-                && x.KhuVuc == khuVuc
-                && x.TrangThai == OrderWorkflowConstants.TrangThaiBanTrong)
-            .OrderBy(x => x.SoBan)
-            .ThenBy(x => x.MaBan)
-            .ThenBy(x => x.TenBan)
-            .Select(x => new OrderTableViewModel
-            {
-                MaBan = x.MaBan,
-                TenBan = x.TenBan,
-                KhuVuc = x.KhuVuc,
-                TrangThai = x.TrangThai,
-            })
+        var table = await _context.Bans
+            .FromSqlInterpolated($"SELECT TOP 1 * FROM dbo.Ban WITH (UPDLOCK, HOLDLOCK) WHERE MaBan <> {OrderWorkflowConstants.MaBanMangVe} AND KhuVuc = {khuVuc} AND TrangThai = {OrderWorkflowConstants.TrangThaiBanTrong} ORDER BY SoBan, MaBan, TenBan")
             .FirstOrDefaultAsync();
+
+        if (table == null)
+            return null;
+
+        return new OrderTableViewModel
+        {
+            MaBan = table.MaBan,
+            TenBan = table.TenBan,
+            KhuVuc = table.KhuVuc,
+            TrangThai = table.TrangThai,
+        };
     }
 
     private async Task<List<OrderTableViewModel>> GetFirstAvailableTablesByAreaAsync()

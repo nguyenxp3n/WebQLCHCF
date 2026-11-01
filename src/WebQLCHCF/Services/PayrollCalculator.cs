@@ -44,6 +44,19 @@ public static class PayrollCalculator
     }
 
     /// <summary>
+    /// Tính tiền công trực tiếp từ số phút làm việc để khớp chính xác với SQL Server:
+    /// CAST(ROUND((CAST(@TongPhut AS decimal(18,4)) / 60.0) * CAST(@DonGiaGio AS decimal(18,4)), 0) AS money)
+    /// Loại bỏ hoàn toàn độ lệch làm tròn 67đ giữa SQL và C#.
+    /// </summary>
+    public static decimal TinhTienCongTuPhut(int tongPhut, decimal donGiaGio)
+    {
+        if (tongPhut <= 0 || donGiaGio <= 0m)
+            return 0m;
+
+        return Math.Round((decimal)tongPhut / 60.0m * donGiaGio, 0, MidpointRounding.AwayFromZero);
+    }
+
+    /// <summary>
     /// Kiểm tra tính hợp lệ của mốc thời gian chấm công.
     /// </summary>
     public static bool KiemTraGioLamHopLe(DateTime checkIn, DateTime checkOut, out string? errorMessage)

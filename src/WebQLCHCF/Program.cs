@@ -1,9 +1,13 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebQLCHCF.Data;
 using WebQLCHCF.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+});
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<AppDbContext>(options =>

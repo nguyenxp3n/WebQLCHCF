@@ -76,6 +76,7 @@ public class PhieuNhapController : BaseController
         ViewData["Labels"] = Labels;
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetUi("Phiếu nhập");
@@ -96,6 +97,7 @@ public class PhieuNhapController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -113,6 +115,7 @@ public class PhieuNhapController : BaseController
         return View(h);
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         SetUi("Thêm phiếu nhập");
@@ -178,6 +181,7 @@ public class PhieuNhapController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Edit(string? id)
     {
         if (id == null)
@@ -225,6 +229,7 @@ public class PhieuNhapController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Delete(string? id)
     {
         if (id == null)
@@ -255,6 +260,7 @@ public class PhieuNhapController : BaseController
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet]
     public async Task<IActionResult> AddDetail(string maPN)
     {
         await LoadDetailDropdownsAsync();
@@ -282,6 +288,7 @@ public class PhieuNhapController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> EditDetail(string maPN, string maNL)
     {
         await LoadDetailDropdownsAsync(true);
@@ -324,6 +331,7 @@ public class PhieuNhapController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> DeleteDetail(string maPN, string maNL)
     {
         ViewData["Title"] = "Xóa chi tiết phiếu nhập";

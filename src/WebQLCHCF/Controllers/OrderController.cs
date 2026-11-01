@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using WebQLCHCF.Services;
 using WebQLCHCF.ViewModels;
+using WebQLCHCF.Security;
 
 namespace WebQLCHCF.Controllers;
 
+[RoleAuthorize(AppRoles.QuanLy, AppRoles.PhucVu)]
 public class OrderController : BaseController
 {
     private readonly IOrderService _orderService;

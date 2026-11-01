@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using WebQLCHCF.Data;
 using WebQLCHCF.Models;
 using WebQLCHCF.ViewModels;
+using WebQLCHCF.Security;
 
 namespace WebQLCHCF.Controllers;
 
+[RoleAuthorize(AppRoles.QuanLy, AppRoles.PhucVu)]
 public class KhachHangController : BaseController
 {
     private readonly AppDbContext _context;
@@ -92,6 +94,7 @@ public class KhachHangController : BaseController
         ViewData["Labels"] = Labels;
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetUi("Khách hàng");
@@ -112,6 +115,7 @@ public class KhachHangController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -133,6 +137,7 @@ public class KhachHangController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         SetUi("Thêm Khách hàng");
@@ -173,6 +178,7 @@ public class KhachHangController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Edit(string? id)
     {
         if (id == null)
@@ -219,6 +225,8 @@ public class KhachHangController : BaseController
         }
     }
 
+    [HttpGet]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> Delete(string? id)
     {
         if (id == null)
@@ -241,6 +249,7 @@ public class KhachHangController : BaseController
     }
 
     [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+    [RoleAuthorize(AppRoles.QuanLy)]
     public async Task<IActionResult> DeleteConfirmed(string? id)
     {
         if (id == null)

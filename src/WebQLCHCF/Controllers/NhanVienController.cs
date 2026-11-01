@@ -146,6 +146,7 @@ public class NhanVienController : BaseController
         };
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         SetUi("Nhân viên");
@@ -166,6 +167,7 @@ public class NhanVienController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -187,6 +189,7 @@ public class NhanVienController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         SetUi("Thêm Nhân viên");
@@ -227,6 +230,7 @@ public class NhanVienController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Edit(string? id)
     {
         if (id == null)
@@ -276,6 +280,7 @@ public class NhanVienController : BaseController
         }
     }
 
+    [HttpGet]
     public async Task<IActionResult> Delete(string? id)
     {
         if (id == null)
