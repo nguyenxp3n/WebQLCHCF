@@ -369,5 +369,157 @@ public class OrderConcurrencyAndIdempotencyTests
         var spParamCount = Convert.ToInt32(await spCmd.ExecuteScalarAsync());
         Assert.Equal(1, spParamCount);
     }
+
+    [Fact]
+    public async Task LiveSqlServer_TenConcurrentRequests_SameClientRequestId_AllResolveToSingleInvoice()
+    {
+        var connStr = GetTargetConnectionString();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlServer(connStr)
+            .Options;
+
+        using var testContext = new AppDbContext(options);
+        if (!await testContext.Database.CanConnectAsync())
+        {
+            var isStrict = string.Equals(Environment.GetEnvironmentVariable("REQUIRE_SQLSERVER_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+            if (isStrict)
+                Assert.Fail("Live SQL Server is unreachable in strict CI mode.");
+            return;
+        }
+
+        // Ensure employee NV01 is checked in on SQL Server
+        await testContext.Database.ExecuteSqlRawAsync(@"
+            IF NOT EXISTS (SELECT 1 FROM dbo.ChamCong WHERE MaNV = 'NV01' AND TrangThai = N'Đang làm' AND ThoiGianCheckOut IS NULL)
+            BEGIN
+                INSERT INTO dbo.ChamCong (MaNV, ThoiGianCheckIn, TrangThai, DonGiaGio)
+                VALUES ('NV01', SYSDATETIME(), N'Đang làm', 25000);
+            END");
+
+        var sharedToken = Guid.NewGuid().ToString("D");
+
+        // Simulate 10 simultaneous HTTP requests hitting SQL Server through separate DbContext & connection instances
+        var tasks = Enumerable.Range(1, 10).Select(async _ =>
+        {
+            await using var reqContext = new AppDbContext(options);
+            var reqService = new OrderService(reqContext);
+
+            var model = new OrderCreateViewModel
+            {
+                ClientRequestId = sharedToken,
+                HinhThuc = OrderWorkflowConstants.HinhThucMangVe,
+                GhiChu = "Cà phê mang đi gấp",
+                Items = new List<OrderItemViewModel>
+                {
+                    new() { MaSP = "SP01", SoLuong = 1 }
+                }
+            };
+
+            return await reqService.CreateOrderAsync(model, "NV01");
+        }).ToList();
+
+        var results = await Task.WhenAll(tasks);
+
+        // 1. All 10 concurrent requests must complete successfully and receive the exact same invoice ID
+        var winnerId = results[0];
+        Assert.False(string.IsNullOrWhiteSpace(winnerId));
+        Assert.All(results, id => Assert.Equal(winnerId, id));
+
+        // 2. Direct physical verification against SQL Server database
+        await using var verifyContext = new AppDbContext(options);
+        var matchingInvoices = await verifyContext.HoaDons
+            .AsNoTracking()
+            .Where(x => x.ClientRequestId == sharedToken)
+            .ToListAsync();
+
+        Assert.Single(matchingInvoices);
+        Assert.Equal(winnerId, matchingInvoices[0].MaHD);
+        Assert.Equal("Cà phê mang đi gấp", matchingInvoices[0].GhiChu);
+    }
+
+    [Fact]
+    public async Task LiveSqlServer_TenConcurrentRequests_DifferentClientRequestId_AllCreateDistinctInvoices()
+    {
+        var connStr = GetTargetConnectionString();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlServer(connStr)
+            .Options;
+
+        using var testContext = new AppDbContext(options);
+        if (!await testContext.Database.CanConnectAsync())
+        {
+            var isStrict = string.Equals(Environment.GetEnvironmentVariable("REQUIRE_SQLSERVER_TEST"), "true", StringComparison.OrdinalIgnoreCase);
+            if (isStrict)
+                Assert.Fail("Live SQL Server is unreachable in strict CI mode.");
+            return;
+        }
+
+        // Ensure employee NV01 is checked in
+        await testContext.Database.ExecuteSqlRawAsync(@"
+            IF NOT EXISTS (SELECT 1 FROM dbo.ChamCong WHERE MaNV = 'NV01' AND TrangThai = N'Đang làm' AND ThoiGianCheckOut IS NULL)
+            BEGIN
+                INSERT INTO dbo.ChamCong (MaNV, ThoiGianCheckIn, TrangThai, DonGiaGio)
+                VALUES ('NV01', SYSDATETIME(), N'Đang làm', 25000);
+            END");
+
+        var tokenList = Enumerable.Range(1, 10).Select(_ => Guid.NewGuid().ToString("D")).ToList();
+
+        // 10 concurrent requests each with distinct ClientRequestId
+        var tasks = tokenList.Select(async token =>
+        {
+            await using var reqContext = new AppDbContext(options);
+            var reqService = new OrderService(reqContext);
+
+            var model = new OrderCreateViewModel
+            {
+                ClientRequestId = token,
+                HinhThuc = OrderWorkflowConstants.HinhThucMangVe,
+                GhiChu = $"Order distinct {token[..8]}",
+                Items = new List<OrderItemViewModel>
+                {
+                    new() { MaSP = "SP01", SoLuong = 1 }
+                }
+            };
+
+            return await reqService.CreateOrderAsync(model, "NV01");
+        }).ToList();
+
+        var results = await Task.WhenAll(tasks);
+
+        // 1. All 10 requests must produce distinct non-colliding order numbers
+        Assert.Equal(10, results.Distinct().Count());
+
+        // 2. Direct physical verification against SQL Server database
+        await using var verifyContext = new AppDbContext(options);
+        var createdCount = await verifyContext.HoaDons
+            .AsNoTracking()
+            .CountAsync(x => tokenList.Contains(x.ClientRequestId!));
+
+        Assert.Equal(10, createdCount);
+    }
+    #endregion
+
+    #region 6. Tier 3 Unique Index Exception Parsing Tests
+    [Fact]
+    public void IsUniqueIndexViolation_WhenMessageContainsIndexName_ReturnsTrue()
+    {
+        var ex = new Exception("Violation of UNIQUE KEY constraint 'UX_HoaDon_ClientRequestId'. Cannot insert duplicate key in object 'dbo.HoaDon'.");
+        Assert.True(OrderService.IsUniqueIndexViolation(ex));
+    }
+
+    [Fact]
+    public void IsUniqueIndexViolation_WhenWrappedInDbUpdateException_ReturnsTrue()
+    {
+        var inner = new Exception("Cannot insert duplicate key row in object 'dbo.HoaDon' with unique index 'UX_HoaDon_ClientRequestId'.");
+        var dbEx = new DbUpdateException("An error occurred while saving the entity changes.", inner);
+
+        Assert.True(OrderService.IsUniqueIndexViolation(dbEx));
+    }
+
+    [Fact]
+    public void IsUniqueIndexViolation_WhenUnrelatedException_ReturnsFalse()
+    {
+        var unrelated = new InvalidOperationException("Connection timeout expired.");
+        Assert.False(OrderService.IsUniqueIndexViolation(unrelated));
+    }
     #endregion
 }

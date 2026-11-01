@@ -337,18 +337,29 @@ public class OrderService : IOrderService
                 if (tx != null) await tx.CommitAsync();
                 return maHD;
             }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) when (ex.InnerException?.Message.Contains("UX_HoaDon_ClientRequestId") == true || ex.Message.Contains("UX_HoaDon_ClientRequestId"))
+            catch (Exception ex) when (IsUniqueIndexViolation(ex))
             {
                 // Tier 3: Physical Database Unique Index guard
-                if (tx != null) await tx.RollbackAsync();
-                var existing = await _context.HoaDons.AsNoTracking().FirstOrDefaultAsync(x => x.ClientRequestId == clientRequestId);
+                if (tx != null)
+                {
+                    try { await tx.RollbackAsync(); } catch { }
+                }
+
+                var existing = await _context.HoaDons
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.ClientRequestId == clientRequestId);
+
                 if (existing != null)
                     return existing.MaHD;
+
                 throw;
             }
             catch
             {
-                if (tx != null) await tx.RollbackAsync();
+                if (tx != null)
+                {
+                    try { await tx.RollbackAsync(); } catch { }
+                }
                 throw;
             }
             finally
@@ -847,6 +858,25 @@ public class OrderService : IOrderService
         var result = await ExecutePaymentProcedureAsync("Ban_KhachDi", ("@MaBan", maBan));
         if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
             throw new InvalidOperationException(result.Message);
+    }
+
+    public static bool IsUniqueIndexViolation(Exception ex)
+    {
+        for (var current = ex; current != null; current = current.InnerException)
+        {
+            if (current is Microsoft.Data.SqlClient.SqlException sqlEx)
+            {
+                if (sqlEx.Number == 2601 || sqlEx.Number == 2627)
+                    return true;
+                if (sqlEx.Message.Contains("UX_HoaDon_ClientRequestId", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            if (current.Message.Contains("UX_HoaDon_ClientRequestId", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     public static string NormalizeClientRequestId(string? rawRequestId)
