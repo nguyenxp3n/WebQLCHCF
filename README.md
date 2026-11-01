@@ -11,6 +11,12 @@
 ![Security](https://img.shields.io/badge/Security-PBKDF2%20%7C%20RBAC%20%7C%20Anti--CSRF%20%7C%20Audit-orange)
 ![Status](https://img.shields.io/badge/Status-Recruiter--Ready-blue)
 
+<div align="center">
+
+**Ngôn ngữ / Language:** **Tiếng Việt** | [English (Secondary)](README_en.md)
+
+</div>
+
 > **WebQLCHCF** là giải pháp phần mềm quản trị toàn diện dành cho chuỗi quán cà phê và điểm bán lẻ ẩm thực (F&B POS & ERP thu nhỏ). Dự án được thiết kế chuẩn mực theo kiến trúc **4-Tier Clean MVC** trên nền tảng **.NET 10 (C# 14)** kết hợp **Entity Framework Core 10** và **SQL Server 2022 Enterprise**, đóng gói hoàn chỉnh bằng **Docker Compose** và xác thực chất lượng với **394 ca kiểm thử tự động (xUnit - 100% Passed)** trên quy trình CI/CD GitHub Actions.
 
 ---
