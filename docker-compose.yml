@@ -47,6 +47,12 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_HTTP_PORTS=8080
       - ConnectionStrings__DefaultConnection=Server=db,1433;Database=QLCHCF;User Id=sa;Password=${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD environment variable is required};TrustServerCertificate=True;Encrypt=False;
+      - VietQr__BankCode=${VIETQR_BANK_CODE:-MB}
+      - VietQr__AccountNo=${VIETQR_ACCOUNT_NO:-0332135258}
+      - VietQr__AccountName=${VIETQR_ACCOUNT_NAME:-HOANG CHIEM NGUYEN}
+      - VIETQR_BANK_CODE=${VIETQR_BANK_CODE:-MB}
+      - VIETQR_ACCOUNT_NO=${VIETQR_ACCOUNT_NO:-0332135258}
+      - VIETQR_ACCOUNT_NAME=${VIETQR_ACCOUNT_NAME:-HOANG CHIEM NGUYEN}
     ports:
       - "${WEB_HOST_PORT:-8081}:8080"
     restart: unless-stopped

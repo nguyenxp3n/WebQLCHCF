@@ -23,9 +23,15 @@ public class OrderService : IOrderService
     public OrderService(AppDbContext context, IConfiguration? configuration = null)
     {
         _context = context;
-        _bankCode = configuration?["VietQr:BankCode"] ?? "MB";
-        _accountNo = configuration?["VietQr:AccountNo"] ?? "0332135258";
-        _accountName = configuration?["VietQr:AccountName"] ?? "HOANG CHIEM NGUYEN";
+        _bankCode = configuration?["VietQr:BankCode"]
+            ?? configuration?["VIETQR_BANK_CODE"]
+            ?? "MB";
+        _accountNo = configuration?["VietQr:AccountNo"]
+            ?? configuration?["VIETQR_ACCOUNT_NO"]
+            ?? "0332135258";
+        _accountName = configuration?["VietQr:AccountName"]
+            ?? configuration?["VIETQR_ACCOUNT_NAME"]
+            ?? "HOANG CHIEM NGUYEN";
     }
 
     public async Task<OrderCreateViewModel> GetCreateModelAsync()
@@ -227,10 +233,26 @@ public class OrderService : IOrderService
             try
             {
                 var maBan = await ResolveTableAsync(model);
-                targetMaHD ??= await NextCodeHelper.NextHoaDonAsync(
-                    _context.HoaDons.Select(x => x.MaHD),
-                    DateTime.Today
-                );
+
+                // Concurrency & Idempotency: Acquire range lock via UPDLOCK, HOLDLOCK so concurrent orders get sequential numbers
+                if (string.IsNullOrWhiteSpace(targetMaHD))
+                {
+                    if (_context.Database.IsRelational())
+                    {
+                        var prefix = DateTime.Today.ToString("yyMMdd");
+                        var maxNumber = await _context.Database
+                            .SqlQueryRaw<int?>("SELECT MAX(TRY_CONVERT(int, RIGHT(MaHD, 3))) AS Value FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK) WHERE MaHD LIKE {0}", prefix + "%")
+                            .FirstOrDefaultAsync() ?? 0;
+                        targetMaHD = $"{prefix}{(maxNumber + 1):D3}";
+                    }
+                    else
+                    {
+                        targetMaHD = await NextCodeHelper.NextHoaDonAsync(
+                            _context.HoaDons.Select(x => x.MaHD),
+                            DateTime.Today
+                        );
+                    }
+                }
 
                 await _context.Database.ExecuteSqlInterpolatedAsync(
                     $"EXEC HoaDon_Them {targetMaHD}, {DateTime.Today}, {maNV}, {maKh}, {model.GhiChu}, {maBan}"
