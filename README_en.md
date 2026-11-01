@@ -593,8 +593,12 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 
 ---
 
-## 👨‍💻 Project & Author Information
+## 👨‍💻 Project & Team Information
 * **Project:** Coffee Shop Management System (WebQLCHCF)
+* **Team Structure:** Group Academic Project — **5 Members**
+* **Personal Role & Core Responsibilities:** **Web UI Developer & Automated QA / Test Engineer**
+  * **Web UI Engineering:** Designed, architected, and built the complete user interface layer across 67 Razor Views & Partials with Bootstrap 5 and custom CSS; streamlined the counter POS checkout flow, integrated dynamic Napas 24/7 VietQR modals, designed visual table layout dispatching, and built payroll/attendance reporting dashboards.
+  * **Automated Testing & CI/CD:** Architected, authored, and maintained the entire **394-case automated test suite (xUnit)** covering 100% of Controllers, Domain Entities, Business Calculation Engines, Concurrency Locks, and Security Policies; configured the automated GitHub Actions CI pipeline executing against live SQL Server 2022 containers with a 100% pass rate.
 * **Repository:** [https://github.com/nguyenxp3n/WebQLCHCF](https://github.com/nguyenxp3n/WebQLCHCF)
 * **Stack:** C# 14 / .NET 10 / ASP.NET Core MVC / EF Core 10 / SQL Server 2022
 * **Automated Tests:** xUnit (394 Unit, Integration & Concurrency Tests - 100% Passed)

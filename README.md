@@ -597,8 +597,12 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 
 ---
 
-## 👨‍💻 Thông Tin Dự Án & Tác Giả
+## 👨‍💻 Thông Tin Dự Án & Đội Ngũ Phát Triển
 * **Dự án:** Web Quản Lý Cửa Hàng Cà Phê (WebQLCHCF)
+* **Quy mô đội ngũ:** Đồ án nhóm **5 thành viên (Team of 5)**
+* **Vai trò cá nhân đảm nhiệm:** **Phát triển Giao diện Web (Web UI Developer) & Kỹ sư Kiểm thử Tự động (Automated QA / Test Engineer)**
+  * **Phát triển Web UI:** Trực tiếp thiết kế và xây dựng toàn bộ hệ thống giao diện người dùng trên nền tảng ASP.NET Core Razor Pages, Bootstrap 5 và CSS tùy biến (67 Views/Partials); tối ưu hóa trải nghiệm POS bán hàng tại quầy, modal thanh toán VietQR động, điều phối sơ đồ bàn trực quan và giao diện bảng lương, chấm công.
+  * **Kiểm thử tự động & CI/CD:** Trực tiếp thiết kế kiến trúc, triển khai và bảo trì trọn bộ **394 ca kiểm thử tự động (xUnit)** bao phủ 100% Controllers, Domain Models, Service Logic, Concurrency Locks và Security Rules; thiết lập pipeline tự động hóa GitHub Actions CI chạy trên SQL Server 2022 service container đạt tỷ lệ vượt qua 100%.
 * **Mã nguồn:** [https://github.com/nguyenxp3n/WebQLCHCF](https://github.com/nguyenxp3n/WebQLCHCF)
 * **Ngôn ngữ & Nền tảng:** C# 14 / .NET 10 / ASP.NET Core MVC / EF Core 10 / SQL Server 2022
 * **Kiểm thử tự động:** xUnit (394 Unit, Integration & Concurrency Tests - 100% Passed)
