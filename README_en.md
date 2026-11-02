@@ -10,12 +10,18 @@
 ![Automated Tests](https://img.shields.io/badge/xUnit-394%20Passed%20(100%25)-brightgreen?logo=xunit)
 ![Security](https://img.shields.io/badge/Security-PBKDF2%20%7C%20RBAC%20%7C%20Anti--CSRF%20%7C%20Audit-orange)
 ![Status](https://img.shields.io/badge/Status-Recruiter--Ready-blue)
+![Project](https://img.shields.io/badge/Project-Team%20Project-orange)
+![Role](https://img.shields.io/badge/Role-Web%20UI%20Developer-blueviolet)
 
 <div align="center">
 
 **Language / Ngôn ngữ:** [Tiếng Việt (Primary)](README.md) | **English**
 
 </div>
+
+> [!NOTE]
+> 👥 **Project Type:** **Group Academic Project (Team of 5)**  
+> 💻 **Personal Responsibility:** **Web UI Development** (Directly designed and engineered the complete user interface layer across ASP.NET Core Razor Pages, streamlined POS cashier workflows, dynamic VietQR modal, visual table layout, and operational dashboards).
 
 > **WebQLCHCF** is an enterprise-grade management solution designed for coffee shop chains and food & beverage (F&B) retail outlets (a mini-ERP & POS system). The project is engineered following a strict **4-Tier Clean MVC Architecture** built on **.NET 10 (C# 14)**, **Entity Framework Core 10**, and **SQL Server 2022 Enterprise**, fully containerized via **Docker Compose**, and verified with **394 automated xUnit test cases (100% Pass Rate)** executed on GitHub Actions CI/CD pipelines.
 

@@ -10,12 +10,18 @@
 ![Automated Tests](https://img.shields.io/badge/xUnit-394%20Passed%20(100%25)-brightgreen?logo=xunit)
 ![Security](https://img.shields.io/badge/Security-PBKDF2%20%7C%20RBAC%20%7C%20Anti--CSRF%20%7C%20Audit-orange)
 ![Status](https://img.shields.io/badge/Status-Recruiter--Ready-blue)
+![Dự án](https://img.shields.io/badge/D%E1%BB%B1%20%C3%A1n-B%C3%A0i%20t%E1%BA%ADp%20nh%C3%B3m-orange)
+![Nhiệm vụ](https://img.shields.io/badge/Nhi%E1%BB%87m%20v%E1%BB%A5-Ph%C3%A1t%20tri%E1%BB%83n%20Web%20UI-blueviolet)
 
 <div align="center">
 
 **Ngôn ngữ / Language:** **Tiếng Việt** | [English (Secondary)](README_en.md)
 
 </div>
+
+> [!NOTE]
+> 👥 **Hình thức thực hiện:** **Bài tập nhóm (Đồ án nhóm 5 thành viên)**  
+> 💻 **Nhiệm vụ cá nhân:** **Phát triển Web UI** (Trực tiếp thiết kế và xây dựng toàn bộ hệ thống giao diện người dùng ASP.NET Core Razor Pages, tối ưu hóa trải nghiệm POS bán hàng tại quầy, modal thanh toán VietQR động, sơ đồ bàn trực quan và các màn hình quản trị nghiệp vụ).
 
 > **WebQLCHCF** là giải pháp phần mềm quản trị toàn diện dành cho chuỗi quán cà phê và điểm bán lẻ ẩm thực (F&B POS & ERP thu nhỏ). Dự án được thiết kế chuẩn mực theo kiến trúc **4-Tier Clean MVC** trên nền tảng **.NET 10 (C# 14)** kết hợp **Entity Framework Core 10** và **SQL Server 2022 Enterprise**, đóng gói hoàn chỉnh bằng **Docker Compose** và xác thực chất lượng với **394 ca kiểm thử tự động (xUnit - 100% Passed)** trên quy trình CI/CD GitHub Actions.
 
