@@ -11,7 +11,7 @@
 ![Security](https://img.shields.io/badge/Security-PBKDF2%20%7C%20RBAC%20%7C%20Anti--CSRF%20%7C%20Audit-orange)
 ![Status](https://img.shields.io/badge/Status-Recruiter--Ready-blue)
 ![Dự án](https://img.shields.io/badge/D%E1%BB%B1%20%C3%A1n-B%C3%A0i%20t%E1%BA%ADp%20nh%C3%B3m-orange)
-![Nhiệm vụ](https://img.shields.io/badge/Nhi%E1%BB%87m%20v%E1%BB%A5-Ph%C3%A1t%20tri%E1%BB%83n%20Web%20UI-blueviolet)
+![Nhiệm vụ](https://img.shields.io/badge/Nhi%E1%BB%87m%20v%E1%BB%A5-Ph%C3%A1t%20tri%E1%BB%83n%20h%E1%BB%87%20th%E1%BB%91ng-blueviolet)
 
 <div align="center">
 
@@ -21,7 +21,7 @@
 
 > [!NOTE]
 > 👥 **Hình thức thực hiện:** **Bài tập nhóm (Đồ án nhóm 5 thành viên)**  
-> 💻 **Nhiệm vụ cá nhân:** **Phát triển Web UI** (Trực tiếp thiết kế và xây dựng toàn bộ hệ thống giao diện người dùng ASP.NET Core Razor Pages, tối ưu hóa trải nghiệm POS bán hàng tại quầy, modal thanh toán VietQR động, sơ đồ bàn trực quan và các màn hình quản trị nghiệp vụ).
+> 💻 **Nhiệm vụ cá nhân:** **Phát triển hệ thống** (Trực tiếp tham gia thiết kế kiến trúc, xây dựng giải pháp phần mềm trên nền ASP.NET Core MVC, phát triển toàn bộ hệ thống giao diện người dùng tương tác, tối ưu hóa quy trình POS bán hàng tại quầy, tích hợp modal thanh toán VietQR động, sơ đồ bàn trực quan và các phân hệ quản trị nghiệp vụ).
 
 > **WebQLCHCF** là giải pháp phần mềm quản trị toàn diện dành cho chuỗi quán cà phê và điểm bán lẻ ẩm thực (F&B POS & ERP thu nhỏ). Dự án được thiết kế chuẩn mực theo kiến trúc **4-Tier Clean MVC** trên nền tảng **.NET 10 (C# 14)** kết hợp **Entity Framework Core 10** và **SQL Server 2022 Enterprise**, đóng gói hoàn chỉnh bằng **Docker Compose** và xác thực chất lượng với **394 ca kiểm thử tự động (xUnit - 100% Passed)** trên quy trình CI/CD GitHub Actions.
 
@@ -606,8 +606,8 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 ## 👨‍💻 Thông Tin Dự Án & Đội Ngũ Phát Triển
 * **Dự án:** Web Quản Lý Cửa Hàng Cà Phê (WebQLCHCF)
 * **Quy mô đội ngũ:** Đồ án nhóm **5 thành viên (Team of 5)**
-* **Vai trò cá nhân đảm nhiệm:** **Phát triển Giao diện Web (Web UI Developer) & Kỹ sư Kiểm thử Tự động (Automated QA / Test Engineer)**
-  * **Phát triển Web UI:** Trực tiếp thiết kế và xây dựng toàn bộ hệ thống giao diện người dùng trên nền tảng ASP.NET Core Razor Pages, Bootstrap 5 và CSS tùy biến (67 Views/Partials); tối ưu hóa trải nghiệm POS bán hàng tại quầy, modal thanh toán VietQR động, điều phối sơ đồ bàn trực quan và giao diện bảng lương, chấm công.
+* **Vai trò cá nhân đảm nhiệm:** **Kỹ sư Phát triển Hệ thống (System Developer) & Kỹ sư Kiểm thử Tự động (Automated QA / Test Engineer)**
+  * **Phát triển hệ thống:** Trực tiếp tham gia thiết kế kiến trúc, xây dựng giải pháp phần mềm toàn diện trên nền tảng .NET 10 / ASP.NET Core MVC, hoàn thiện hệ thống giao diện người dùng (67 Views/Partials); tối ưu hóa trải nghiệm POS bán hàng tại quầy, modal thanh toán VietQR động, điều phối sơ đồ bàn trực quan cùng các phân hệ quản trị kho, nhân sự và bảng lương.
   * **Kiểm thử tự động & CI/CD:** Trực tiếp thiết kế kiến trúc, triển khai và bảo trì trọn bộ **394 ca kiểm thử tự động (xUnit)** bao phủ 100% Controllers, Domain Models, Service Logic, Concurrency Locks và Security Rules; thiết lập pipeline tự động hóa GitHub Actions CI chạy trên SQL Server 2022 service container đạt tỷ lệ vượt qua 100%.
 * **Mã nguồn:** [https://github.com/nguyenxp3n/WebQLCHCF](https://github.com/nguyenxp3n/WebQLCHCF)
 * **Ngôn ngữ & Nền tảng:** C# 14 / .NET 10 / ASP.NET Core MVC / EF Core 10 / SQL Server 2022

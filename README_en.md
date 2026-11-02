@@ -11,7 +11,7 @@
 ![Security](https://img.shields.io/badge/Security-PBKDF2%20%7C%20RBAC%20%7C%20Anti--CSRF%20%7C%20Audit-orange)
 ![Status](https://img.shields.io/badge/Status-Recruiter--Ready-blue)
 ![Project](https://img.shields.io/badge/Project-Team%20Project-orange)
-![Role](https://img.shields.io/badge/Role-Web%20UI%20Developer-blueviolet)
+![Role](https://img.shields.io/badge/Role-System%20Developer-blueviolet)
 
 <div align="center">
 
@@ -21,7 +21,7 @@
 
 > [!NOTE]
 > 👥 **Project Type:** **Group Academic Project (Team of 5)**  
-> 💻 **Personal Responsibility:** **Web UI Development** (Directly designed and engineered the complete user interface layer across ASP.NET Core Razor Pages, streamlined POS cashier workflows, dynamic VietQR modal, visual table layout, and operational dashboards).
+> 💻 **Personal Responsibility:** **System Development** (Directly architected and engineered end-to-end software solutions across ASP.NET Core MVC, developed responsive user interaction flows, streamlined POS cashier operations, integrated dynamic VietQR payment modals, visual table management, and comprehensive administrative modules).
 
 > **WebQLCHCF** is an enterprise-grade management solution designed for coffee shop chains and food & beverage (F&B) retail outlets (a mini-ERP & POS system). The project is engineered following a strict **4-Tier Clean MVC Architecture** built on **.NET 10 (C# 14)**, **Entity Framework Core 10**, and **SQL Server 2022 Enterprise**, fully containerized via **Docker Compose**, and verified with **394 automated xUnit test cases (100% Pass Rate)** executed on GitHub Actions CI/CD pipelines.
 
@@ -602,8 +602,8 @@ dotnet run --project src/WebQLCHCF/WebQLCHCF.csproj
 ## 👨‍💻 Project & Team Information
 * **Project:** Coffee Shop Management System (WebQLCHCF)
 * **Team Structure:** Group Academic Project — **5 Members**
-* **Personal Role & Core Responsibilities:** **Web UI Developer & Automated QA / Test Engineer**
-  * **Web UI Engineering:** Designed, architected, and built the complete user interface layer across 67 Razor Views & Partials with Bootstrap 5 and custom CSS; streamlined the counter POS checkout flow, integrated dynamic Napas 24/7 VietQR modals, designed visual table layout dispatching, and built payroll/attendance reporting dashboards.
+* **Personal Role & Core Responsibilities:** **System Developer & Automated QA / Test Engineer**
+  * **System Development:** Architected and engineered end-to-end software solutions across .NET 10 / ASP.NET Core MVC, including the full user interface layer (67 Razor Views & Partials); streamlined counter POS operations, integrated dynamic Napas 24/7 VietQR modals, visual table dispatching, and core inventory/payroll management modules.
   * **Automated Testing & CI/CD:** Architected, authored, and maintained the entire **394-case automated test suite (xUnit)** covering 100% of Controllers, Domain Entities, Business Calculation Engines, Concurrency Locks, and Security Policies; configured the automated GitHub Actions CI pipeline executing against live SQL Server 2022 containers with a 100% pass rate.
 * **Repository:** [https://github.com/nguyenxp3n/WebQLCHCF](https://github.com/nguyenxp3n/WebQLCHCF)
 * **Stack:** C# 14 / .NET 10 / ASP.NET Core MVC / EF Core 10 / SQL Server 2022
